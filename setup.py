@@ -3,6 +3,7 @@ from setuptools import setup
 requires = [
     'jupyter',
     'scikit-learn',
+    'scipy',
     'numpy',
     'matplotlib',
 ]
