@@ -1,0 +1,836 @@
+
+
+<!doctype html>
+
+<html class="windows x86 no-js" lang="en" dir="ltr" data-latest-firefox="52.0" data-esr-versions="45.8.0" data-gtm-container-id="GTM-MW3R8V"  data-stub-attribution-rate="1.0">
+  <head>
+    <meta charset="utf-8">
+
+    <script type="text/javascript" src="/media/js/site-bundle.1688e984bc3d.js" charset="utf-8"></script>
+    
+
+<!--
+             _.-~-.
+           7''  Q..\
+        _7         (_
+      _7  _/    _q.  /
+    _7 . ___  /VVvv-'_                                            .
+   7/ / /~- \_\\      '-._     .-'                      /       //
+  ./ ( /-~-/||'=.__  '::. '-~'' {             ___   /  //     ./{
+ V   V-~-~| ||   __''_   ':::.   ''~-~.___.-'' _/  // / {_   /  {  /
+  VV/-~-~-|/ \ .'__'. '.    '::                     _ _ _        ''.
+  / /~~~~||VVV/ /  \ )  \        _ __ ___   ___ ___(_) | | __ _   .::'
+ / (~-~-~\\.-' /    \'   \::::. | '_ ` _ \ / _ \_  / | | |/ _` | :::'
+/..\    /..\__/      '     '::: | | | | | | (_) / /| | | | (_| | ::'
+vVVv    vVVv                 ': |_| |_| |_|\___/___|_|_|_|\__,_| ''
+
+Hi there, nice to meet you!
+
+Interested in having a direct impact on hundreds of millions of users? Join
+Mozilla, and become part of a global community that’s helping to build a
+brighter future for the Web.
+
+Visit https://careers.mozilla.org to learn about our current job openings.
+Visit https://www.mozilla.org/contribute for more ways to get involved and
+help support Mozilla.
+-->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+
+    <title>Security vulnerabilities fixed in Firefox 51 — Mozilla</title>
+    <meta name="description" content="">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Mozilla">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:url" content="https://www.mozilla.org/en-US/security/advisories/mfsa2017-01/">
+    <meta property="og:image" content="https://www.mozilla.org/media/img/mozorg/mozilla-256.c29a8b01d659.jpg">
+    <meta property="og:title" content="Security vulnerabilities fixed in Firefox 51">
+    <meta property="og:description" content="">
+    <meta property="fb:page_id" content="262134952380">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:site" content="@mozilla">
+    <meta name="twitter:domain" content="mozilla.org">
+    <meta name="twitter:app:name:googleplay" content="Firefox">
+    <meta name="twitter:app:id:googleplay" content="org.mozilla.firefox">
+    <meta name="twitter:app:name:iphone" content="Firefox">
+    <meta name="twitter:app:id:iphone" content="989804926">
+    <meta name="twitter:app:name:ipad" content="Firefox">
+    <meta name="twitter:app:id:ipad" content="989804926">
+    <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="/media/img/favicon/apple-touch-icon-180x180.8772ec154918.png">
+    <link rel="icon" type="image/png" sizes="196x196" href="/media/img/favicon/favicon-196x196.c80e6abe0767.png">
+    <link rel="shortcut icon" href="/media/img/favicon.d4f1f46b91f4.ico">
+        <link rel="canonical" hreflang="en" href="https://www.mozilla.org/en-US/security/advisories/mfsa2017-01/">
+    <link rel="alternate" hreflang="x-default" href="https://www.mozilla.org/security/advisories/mfsa2017-01/">
+    <link rel="alternate" hreflang="en" href="https://www.mozilla.org/en-US/security/advisories/mfsa2017-01/" title="English">
+    <link rel="alternate" hreflang="en-CA" href="https://www.mozilla.org/en-US/security/advisories/mfsa2017-01/" title="English (Canada)">
+    
+    
+
+    
+
+    <!--[if lte IE 8]>
+      
+      <script src="/media/js/libs/html5shiv.d580a4cd1cb4.js"></script>
+
+      
+      <link href="/media/css/oldIE-bundle.c95d264ac4d9.css" rel="stylesheet" type="text/css" />
+    <![endif]-->
+
+    <!--[if !lte IE 8]><!-->
+    
+    
+      <link href="/media/css/responsive-bundle.ecc928fcc6d0.css" rel="stylesheet" type="text/css" />
+    
+
+    
+    
+  <link href="/media/css/security-bundle.f84f16fb939b.css" rel="stylesheet" type="text/css" />
+
+    <!--<![endif]-->
+
+    
+      
+    
+
+    
+
+    
+    
+      <!-- Google Tag Manager -->
+<!-- Customized for Mozilla.org-->
+<!-- Region Container: NONE -->
+<!-- Rollup Container: System Filtered -->
+<!-- Site Container: NONE -->
+
+
+  <script type="text/javascript" src="/media/js/gtm-snippet-bundle.bb4ed1f72aad.js" charset="utf-8"></script>
+
+<!-- End Google Tag Manager -->
+    
+  </head>
+
+  <body class="html-ltr sand">
+    <div id="strings"
+      data-global-close="Close"
+      data-global-next="Next"
+      data-global-previous="Previous"
+      data-global-update-firefox="Update your Firefox"
+      ></div>
+    <div id="outer-wrapper">
+
+    
+    
+
+      <div id="wrapper">
+
+      
+        <header id="masthead">
+
+        
+          <div id="tabzilla">
+            <a href="/en-US/" data-link-type="nav" data-link-name="tabzilla">Mozilla</a>
+          </div>
+        
+
+        
+          <nav id="nav-main" role="navigation">
+            <span class="toggle" role="button" aria-controls="nav-main-menu" aria-expanded="false" tabindex="0">Menu</span>
+            <ul id="nav-main-menu">
+              <li class="first internet-health-item">
+                <a href="/en-US/internet-health/" data-link-type="nav" data-link-name="Internet Health">Internet Health</a>
+              </li>
+              <li class="technology-item">
+                <a href="/en-US/technology/" data-link-type="nav" data-link-name="Web Innovations">Web Innovations</a>
+              </li>
+              <li class="last donate-item">
+                <a href="https://donate.mozilla.org/en-US/?presets=100,50,25,15&amp;amount=50&amp;ref=EOYFR2015&amp;utm_campaign=EOYFR2015&amp;utm_source=mozilla.org&amp;utm_medium=referral&amp;utm_content=header&amp;currency=usd" data-link-type="nav" data-link-name="Donate">Donate</a>
+              </li>
+            </ul>
+          </nav>
+        
+
+        
+          <h2><a href="/en-US/"><img class="" src="/media/img/sandstone/header-mozilla-stone.5a157cb2c70c.png" srcset="/media/img/sandstone/header-mozilla-stone-high-res.e61d5c2e5341.png 1.5x" width="170" alt="Mozilla" height="45"></a></h2>
+        
+
+        
+
+        
+
+        
+  <nav class="breadcrumbs">
+    <a href="/en-US/">Home</a> &gt;
+    <a href="/en-US/security/">Mozilla Security</a> &gt;
+    <a href="/en-US/security/advisories/">Security Advisories</a> &gt;
+  </nav>
+
+
+        
+
+        </header>
+      
+
+      
+        
+      
+
+      
+  
+  
+  <main id="main-content">
+    <div class="main-column">
+      
+  <article class="section-content advisory" itemscope itemtype="http://schema.org/Article">
+    <header>
+      <h1 itemprop="name" class="title-shadow-box">Mozilla Foundation Security Advisory 2017-01</h1>
+    </header>
+    <div itemprop="articleBody">
+
+      <h2>Security vulnerabilities fixed in Firefox 51</h2>
+
+      <dl class="summary">
+        
+          <dt>Announced</dt>
+          <dd>January 24, 2017</dd>
+        
+        
+        
+        
+          <dt>Impact</dt>
+          <dd><span class="level critical">critical</span></dd>
+        
+        <dt>Products</dt>
+        <dd>Firefox</dd>
+        <dt>Fixed in</dt>
+        <dd>
+          <ul>
+            
+              <li>Firefox 51</li>
+            
+          </ul>
+        </dd>
+        
+      </dl>
+
+      <section class="cve">
+  <h4 id="CVE-2017-5375" class="level-heading">
+    <a href="#CVE-2017-5375"><span class="anchor">#</span>CVE-2017-5375: Excessive JIT code allocation allows bypass of ASLR and DEP</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Rh0</dd>
+    <dt>Impact</dt>
+    <dd><span class="level critical">critical</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>JIT code allocation can allow for a bypass of ASLR and DEP protections leading to potential memory corruption attacks.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1325200">Bug 1325200</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5376" class="level-heading">
+    <a href="#CVE-2017-5376"><span class="anchor">#</span>CVE-2017-5376: Use-after-free in XSL</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Nicolas Grégoire</dd>
+    <dt>Impact</dt>
+    <dd><span class="level critical">critical</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>Use-after-free while manipulating XSL in XSLT documents</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1311687">Bug 1311687</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5377" class="level-heading">
+    <a href="#CVE-2017-5377"><span class="anchor">#</span>CVE-2017-5377: Memory corruption with transforms to create gradients in Skia</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Atte Kettunen</dd>
+    <dt>Impact</dt>
+    <dd><span class="level critical">critical</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>A memory corruption vulnerability in Skia that can occur when using transforms to make gradients, resulting in a potentially exploitable crash.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1306883">Bug 1306883</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5378" class="level-heading">
+    <a href="#CVE-2017-5378"><span class="anchor">#</span>CVE-2017-5378: Pointer and frame data leakage of Javascript objects</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Jann Horn</dd>
+    <dt>Impact</dt>
+    <dd><span class="level high">high</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>Hashed codes of JavaScript objects are shared between pages. This allows for pointer leaks because an object’s address can be discovered through hash codes, and also allows for data leakage of an object’s content using these hash codes.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1312001">Bug 1312001</a></li><li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1330769">Bug 1330769</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5379" class="level-heading">
+    <a href="#CVE-2017-5379"><span class="anchor">#</span>CVE-2017-5379: Use-after-free in Web Animations</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Nils</dd>
+    <dt>Impact</dt>
+    <dd><span class="level high">high</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>Use-after-free vulnerability in Web Animations when interacting with cycle collection found through fuzzing.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1309198">Bug 1309198</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5380" class="level-heading">
+    <a href="#CVE-2017-5380"><span class="anchor">#</span>CVE-2017-5380: Potential use-after-free during DOM manipulations</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Nils</dd>
+    <dt>Impact</dt>
+    <dd><span class="level high">high</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>A potential use-after-free found through fuzzing during DOM manipulation of SVG content. </p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1322107">Bug 1322107</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5390" class="level-heading">
+    <a href="#CVE-2017-5390"><span class="anchor">#</span>CVE-2017-5390: Insecure communication methods in Developer Tools JSON viewer</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Jerri Rice</dd>
+    <dt>Impact</dt>
+    <dd><span class="level high">high</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>The JSON viewer in the Developer Tools uses insecure methods to create a communication channel for copying and viewing JSON or HTTP headers data, allowing for potential privilege escalation.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1297361">Bug 1297361</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5389" class="level-heading">
+    <a href="#CVE-2017-5389"><span class="anchor">#</span>CVE-2017-5389: WebExtensions can install additional add-ons via modified host requests</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Kris Maglione</dd>
+    <dt>Impact</dt>
+    <dd><span class="level high">high</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>WebExtensions could use the <code>mozAddonManager</code> API by modifying the CSP headers on sites with the appropriate permissions and then using host requests to redirect script loads to a malicious site. This allows a malicious extension to then install additional extensions without explicit user permission.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1308688">Bug 1308688</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5396" class="level-heading">
+    <a href="#CVE-2017-5396"><span class="anchor">#</span>CVE-2017-5396: Use-after-free with Media Decoder</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Filipe Gomes</dd>
+    <dt>Impact</dt>
+    <dd><span class="level high">high</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>A use-after-free vulnerability in the Media Decoder when working with media files when some events are fired after the media elements are freed from memory.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1329403">Bug 1329403</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5381" class="level-heading">
+    <a href="#CVE-2017-5381"><span class="anchor">#</span>CVE-2017-5381: Certificate Viewer exporting can be used to navigate and save to arbitrary filesystem locations</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Jann Horn</dd>
+    <dt>Impact</dt>
+    <dd><span class="level moderate">moderate</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>The "export" function in the Certificate Viewer can force local filesystem navigation when the "common name" in a certificate contains slashes, allowing certificate content to be saved in unsafe locations with an arbitrary filename.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1017616">Bug 1017616</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5382" class="level-heading">
+    <a href="#CVE-2017-5382"><span class="anchor">#</span>CVE-2017-5382: Feed preview can expose privileged content errors and exceptions</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Jerri Rice</dd>
+    <dt>Impact</dt>
+    <dd><span class="level moderate">moderate</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>Feed preview for RSS feeds can be used to capture errors and exceptions generated by privileged content, allowing for the exposure of internal information not meant to be seen by web content.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1295322">Bug 1295322</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5383" class="level-heading">
+    <a href="#CVE-2017-5383"><span class="anchor">#</span>CVE-2017-5383: Location bar spoofing with unicode characters</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Armin Razmjou</dd>
+    <dt>Impact</dt>
+    <dd><span class="level moderate">moderate</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>URLs containing certain unicode glyphs for alternative hyphens and quotes do not properly trigger punycode display, allowing for domain name spoofing attacks in the location bar.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1323338">Bug 1323338</a></li><li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1324716">Bug 1324716</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5384" class="level-heading">
+    <a href="#CVE-2017-5384"><span class="anchor">#</span>CVE-2017-5384: Information disclosure via Proxy Auto-Config (PAC)</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Paul Stone, Alex Chapman</dd>
+    <dt>Impact</dt>
+    <dd><span class="level moderate">moderate</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>Proxy Auto-Config (PAC) files can specify a JavaScript function called for all URL requests with the full URL path which exposes more information than would be sent to the proxy itself in the case of HTTPS. Normally the Proxy Auto-Config file is specified by the user or machine owner and presumed to be non-malicious, but if a user has enabled Web Proxy Auto Detect (WPAD) this file can be served remotely.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1255474">Bug 1255474</a></li><li><a href="https://www.contextis.com//resources/blog/leaking-https-urls-20-year-old-vulnerability/">Sniffing HTTPS URLS with malicious PAC files</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5385" class="level-heading">
+    <a href="#CVE-2017-5385"><span class="anchor">#</span>CVE-2017-5385: Data sent in multipart channels ignores referrer-policy response headers</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Muneaki Nishimura</dd>
+    <dt>Impact</dt>
+    <dd><span class="level moderate">moderate</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>Data sent with in multipart channels, such as the multipart/x-mixed-replace MIME type, will ignore the referrer-policy response header, leading to potential information disclosure for sites using this header.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1295945">Bug 1295945</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5386" class="level-heading">
+    <a href="#CVE-2017-5386"><span class="anchor">#</span>CVE-2017-5386: WebExtensions can use data: protocol to affect other extensions</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Muneaki Nishimura</dd>
+    <dt>Impact</dt>
+    <dd><span class="level moderate">moderate</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>WebExtension scripts can use the <code>data:</code> protocol to affect pages loaded by other web extensions using this protocol, leading to potential data disclosure or privilege escalation in affected extensions. </p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1319070">Bug 1319070</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5394" class="level-heading">
+    <a href="#CVE-2017-5394"><span class="anchor">#</span>CVE-2017-5394: Android location bar spoofing using fullscreen and JavaScript events</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Jordi Chancel</dd>
+    <dt>Impact</dt>
+    <dd><span class="level moderate">moderate</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>A location bar spoofing attack where the location bar of loaded page will be shown over the content of another tab due to a series of JavaScript events combined with fullscreen mode. <br><em>Note: This issue only affects Firefox for Android. Other operating systems are not affected.</em></p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1222798">Bug 1222798</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5391" class="level-heading">
+    <a href="#CVE-2017-5391"><span class="anchor">#</span>CVE-2017-5391: Content about: pages can load privileged about: pages</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Jerri Rice</dd>
+    <dt>Impact</dt>
+    <dd><span class="level moderate">moderate</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>Special <code>about:</code> pages used by web content, such as RSS feeds, can load privileged <code>about:</code> pages in an iframe. If a content-injection bug were found in one of those pages this could allow for potential privilege escalation.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1309310">Bug 1309310</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5392" class="level-heading">
+    <a href="#CVE-2017-5392"><span class="anchor">#</span>CVE-2017-5392: Weak references using multiple threads on weak proxy objects lead to unsafe memory usage</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Honza Bambas</dd>
+    <dt>Impact</dt>
+    <dd><span class="level moderate">moderate</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>Weak proxy objects have weak references on multiple threads when they should only have them on one, resulting in incorrect memory usage and corruption, which leads to potentially exploitable crashes. <br><em>Note: This issue only affects Firefox for Android. Other operating systems are not affected.</em></p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1293709">Bug 1293709</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5393" class="level-heading">
+    <a href="#CVE-2017-5393"><span class="anchor">#</span>CVE-2017-5393: Remove addons.mozilla.org CDN from whitelist for mozAddonManager</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Stuart Colville</dd>
+    <dt>Impact</dt>
+    <dd><span class="level moderate">moderate</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>The <code>mozAddonManager</code> allows for the installation of extensions from the CDN for addons.mozilla.org, a publicly accessible site. This could allow malicious extensions to install additional extensions from the CDN in combination with an XSS attack on Mozilla AMO sites. </p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1309282">Bug 1309282</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5395" class="level-heading">
+    <a href="#CVE-2017-5395"><span class="anchor">#</span>CVE-2017-5395: Android location bar spoofing during scrolling</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Jordi Chancel</dd>
+    <dt>Impact</dt>
+    <dd><span class="level low">low</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>Malicious sites can display a spoofed location bar on a subsequently loaded page when the existing location bar on the new page is scrolled out of view if navigations between pages can be timed correctly. <br><em>Note: This issue only affects Firefox for Android. Other operating systems are not affected.</em></p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1293463">Bug 1293463</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5387" class="level-heading">
+    <a href="#CVE-2017-5387"><span class="anchor">#</span>CVE-2017-5387: Disclosure of local file existence through TRACK tag error messages</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Mustafa Hasan</dd>
+    <dt>Impact</dt>
+    <dd><span class="level low">low</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>The existence of a specifically requested local file can be found due to the double firing of the <code>onerror</code> when the <code>source</code> attribute on a  <code>&lt;track&gt;</code> tag refers to a file that does not exist if the source page is loaded locally.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1295023">Bug 1295023</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5388" class="level-heading">
+    <a href="#CVE-2017-5388"><span class="anchor">#</span>CVE-2017-5388: WebRTC can be used to generate a large amount of UDP traffic for DDOS attacks</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Cullen Jennings</dd>
+    <dt>Impact</dt>
+    <dd><span class="level low">low</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>A STUN server in conjunction with a large number of <code>webkitRTCPeerConnection</code> objects can be used to send large STUN packets in a short period of time due to a lack of rate limiting being applied on e10s systems, allowing for a denial of service attack. </p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/show_bug.cgi?id=1281482">Bug 1281482</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5374" class="level-heading">
+    <a href="#CVE-2017-5374"><span class="anchor">#</span>CVE-2017-5374: Memory safety bugs fixed in Firefox 51</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Mozilla developers and community</dd>
+    <dt>Impact</dt>
+    <dd><span class="level critical">critical</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>Mozilla developers and community members Gary Kwong, Olli Pettay, Tooru Fujisawa, Carsten Book, Andrew McCreight, Chris Pearce, Ronald Crane, Jan de Mooij, Julian Seward, Nicolas Pierron, Randell Jesup, Esther Monchari, Honza Bambas, and Philipp reported memory safety bugs present in Firefox 50.1. Some of these bugs showed evidence of memory corruption and we presume that with enough effort that some of these could be exploited to run arbitrary code.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/buglist.cgi?bug_id=1325344%2C1317501%2C1311319%2C1329989%2C1300145%2C1322305%2C1288561%2C1295747%2C1318766%2C1297808%2C1321374%2C1324810%2C1313385%2C1319888%2C1302231%2C1307458%2C1293327%2C1315447%2C1319456">Memory safety bugs fixed in Firefox 51</a></li>
+    </ul>
+  
+</section>
+
+<section class="cve">
+  <h4 id="CVE-2017-5373" class="level-heading">
+    <a href="#CVE-2017-5373"><span class="anchor">#</span>CVE-2017-5373: Memory safety bugs fixed in Firefox 51 and Firefox ESR 45.7</a>
+  </h4>
+  <dl class="summary">
+    <dt>Reporter</dt>
+    <dd>Mozilla developers and community</dd>
+    <dt>Impact</dt>
+    <dd><span class="level critical">critical</span></dd>
+  </dl>
+  <h5>Description</h5>
+  <p>Mozilla developers and community members Christian Holler, Gary Kwong, André Bargull, Jan de Mooij, Tom Schuster, and Oriol reported memory safety bugs present in Firefox 50.1 and Firefox ESR 45.6. Some of these bugs showed evidence of memory corruption and we presume that with enough effort that some of these could be exploited to run arbitrary code.</p>
+  
+    <h5>References</h5>
+    <ul>
+      <li><a href="https://bugzilla.mozilla.org/buglist.cgi?bug_id=1322315%2C1328834%2C1322420%2C1285833%2C1285960%2C1328251%2C1331058%2C1325938%2C1325877">Memory safety bugs fixed in Firefox 51 and Firefox ESR 45.7</a></li>
+    </ul>
+  
+</section>
+    </div>
+  </article>
+
+    </div>
+    
+      <aside class="sidebar">
+        
+          <nav>
+            <ul>
+            
+              <li>
+              
+                <a href="/en-US/security/">Mozilla Security</a>
+              
+              </li>
+            
+              <li>
+              
+                <a href="/en-US/security/advisories/">Security Advisories</a>
+              
+              </li>
+            
+              <li>
+              
+                <a href="/en-US/security/known-vulnerabilities/">Known Vulnerabilities</a>
+              
+              </li>
+            
+              <li>
+              
+                <a href="/en-US/security/bug-bounty/">Bug Bounty</a>
+              
+              </li>
+            
+              <li>
+              
+                <a href="/en-US/security/bug-bounty/hall-of-fame/">Firefox Hall Of Fame</a>
+              
+              </li>
+            
+              <li>
+              
+                <a href="/en-US/security/bug-bounty/web-hall-of-fame/">Mozilla Web and Services Hall Of Fame</a>
+              
+              </li>
+            
+              <li>
+              
+                <a href="https://blog.mozilla.com/security/">Security Blog</a>
+              
+              </li>
+            
+            </ul>
+          </nav>
+        
+        
+        
+      </aside>
+    
+  </main>
+
+
+      
+
+      </div><!-- close #wrapper -->
+
+      
+      
+
+      
+              <footer id="colophon" class="">
+        <nav class="row">
+          <div class="col col-1">
+            <div class="logo"><a href="/en-US/" data-link-type="footer" data-link-name="Mozilla">Mozilla</a></div>
+            <p class="license">Portions of this content are ©1998–2017 by individual mozilla.org contributors. Content available under a <a href="/en-US/foundation/licensing/website-content/">Creative Commons license</a>.</p>
+          </div>
+          <div class="col col-2">
+            <ul class="links-join">
+              <li><a href="/en-US/about/" data-link-type="footer" data-link-name="About">About</a></li>
+              <li class="wrap"><a href="/en-US/contact/" data-link-type="footer" data-link-name="Contact Us">Contact Us</a></li>
+              <li class="wrap"><a href="https://donate.mozilla.org/en-US/?presets=100,50,25,15&amp;amount=50&amp;ref=EOYFR2015&amp;utm_campaign=EOYFR2015&amp;utm_source=mozilla.org&amp;utm_medium=referral&amp;utm_content=footer&amp;currency=usd" class="donate" data-link-type="footer" data-link-name="Donate">Donate</a></li>
+              <li class="clear"><a href="https://wiki.mozilla.org/Webdev/GetInvolved/mozilla.org" data-link-type="footer" data-link-name="Contribute to this site">Contribute to this site</a></li>
+            </ul>
+
+            
+
+            <ul class="links-legal">
+              <li><a href="/en-US/privacy/" data-link-type="footer" data-link-name="Privacy">Privacy</a></li>
+              <li class="wrap"><a href="/en-US/privacy/websites/#cookies" data-link-type="footer" data-link-name="Cookies">Cookies</a></li>
+              <li class="wrap"><a href="/en-US/about/legal/" data-link-type="footer" data-link-name="Legal">Legal</a></li>
+              <li class="clear"><a href="/en-US/about/legal/fraud-report/" data-link-type="footer" data-link-name="Report Trademark Abuse">Report Trademark Abuse</a></li>
+            </ul>
+          </div>
+          <div class="col col-3">
+            <ul class="links-social">
+              <li>
+                Mozilla:
+                <ul>
+                  <li><a href="https://twitter.com/mozilla" data-link-type="footer" data-link-name="Twitter (@mozilla)">Twitter<span> (@mozilla)</span></a></li>
+                  <li><a href="https://www.facebook.com/mozilla" data-link-type="footer" data-link-name="Facebook (Mozilla)">Facebook<span> (Mozilla)</span></a></li>
+                  <li><a href="https://www.instagram.com/mozillagram/" data-link-type="footer" data-link-name="Instagram (@mozillagram)">Instagram<span> (@mozillagram)</span></a></li>
+                </ul>
+              </li>
+              <li>
+                Firefox:
+                <ul>
+                  <li><a href="https://twitter.com/firefox" data-link-type="footer" data-link-name="Twitter (@firefox)">Twitter<span> (@firefox)</span></a></li>
+                  <li><a href="https://www.facebook.com/Firefox" data-link-type="footer" data-link-name="Facebook (Firefox)">Facebook<span> (Firefox)</span></a></li>
+                  <li><a href="https://www.youtube.com/firefoxchannel" data-link-type="footer" data-link-name="YouTube (firefoxchannel)">YouTube<span> (firefoxchannel)</span></a></li>
+                </ul>
+              </li>
+            </ul>
+            <div class="lang-switcher">
+              
+            </div>
+          </div>
+        </nav>
+      </footer>
+      
+
+    </div><!-- close #outer-wrapper -->
+
+    <!--[if IE 9]>
+      <script src="/media/js/libs/matchMedia.3fd01d1af18b.js"></script>
+    <![endif]-->
+
+    
+      <script type="text/javascript" src="/media/js/common-bundle.fef29294f735.js" charset="utf-8"></script>
+    
+
+    
+    
+      
+        <script type="text/javascript" src="/media/js/stub-attribution-bundle.24a3d38f42a0.js" charset="utf-8"></script>
+      
+    
+
+    
+
+    
+  </body>
+</html>
