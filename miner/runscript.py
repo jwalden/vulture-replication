@@ -23,7 +23,7 @@ parser.add_argument('--scrape-advisories', action='store_true',
                     help='scrape and store the individual advisory pages')
 parser.add_argument('--extract-advisories', action='store_true',
                     help='parse stored advisory pages and store found bug numbers')
-parser.add_argument('--build-index', metavar='repopath', type=str,
+parser.add_argument('--build-commit-index', metavar='repopath', type=str,
                     help='build the index for the given repository path and store it')
 
 args = vars(parser.parse_args())
@@ -34,8 +34,8 @@ scrape_advisories = args['scrape_advisories']
 extract_and_persist_advisories = args['extract_advisories']
 
 # Options for building the index of vulnerability-related commits
-repository_path = args['build_index']
-build_and_persist_index = repository_path is not None
+repository_path = args['build_commit_index']
+build_and_persist_commit_index = repository_path is not None
 
 
 if scrape_overview:
@@ -58,7 +58,7 @@ if extract_and_persist_advisories:
     print('done')
     print('')
 
-if build_and_persist_index:
+if build_and_persist_commit_index:
     print('building and storing index of vulnerability-related commits, this'
           ' may take some time')
     try:
@@ -70,7 +70,7 @@ if build_and_persist_index:
         print('ERROR: could not read the stored bug numbers')
         exit()
     try:
-        index = combine.create_index(repository_path, bug_numbers)
+        index = combine.create_commit_index(repository_path, bug_numbers)
     except ServerError:
         print('ERROR: provided path is not a valid mercurial repository')
         exit()

@@ -8,7 +8,7 @@ import mozilla_hg as hg
 log = logging.getLogger(__name__)
 
 
-def create_index(repo_path, bugs):
+def create_commit_index(repo_path, bugs):
     """
     Combines the vulnerability bug numbers with individual commits. Returns an
     index as dict of {bugno: [(commit number, node, commit message), ...]}.
