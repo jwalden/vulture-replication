@@ -2,6 +2,7 @@ import requests
 import re
 import os
 import logging
+import cPickle as pickle
 
 from bs4 import BeautifulSoup
 
@@ -17,19 +18,20 @@ headers = {'user-agent': 'vulture-replication/0.0.1'}
 pattern = re.compile('^(bug_)?id=([0-9,]+)$')
 
 
-def scrape_overview(overview_path='data/miner/advisories.html'):
+def scrape_overview(store_path='data/miner/advisories.html'):
     """
     Scrapes the advisory overview page and stores it in overview_path.
     """
     r = requests.get('https://www.mozilla.org/en-US/security/advisories/',
         headers=headers)
-    with open(overview_path, 'w') as f:
+    with open(store_path, 'w') as f:
         f.write(r.content)
 
 
 def parse_overview(overview_path='data/miner/advisories.html'):
     """
-    Parses the advisory overview page. Returns a list of tuples of (MFSA, URL).
+    Parses the advisory overview page. Returns a list of tuples of
+    (MFSA-Identifier, URL).
     """
     content = ''
     with open(overview_path, 'r') as f:
@@ -50,7 +52,7 @@ def parse_overview(overview_path='data/miner/advisories.html'):
 def scrape_advisories(advisories, path='data/miner/advisories'):
     """
     Scrapes the individual advisory pages and stores them in path. Advisories
-    of structure (MFSA, URL).
+    need to be of structure (MFSA-Identifier, URL).
     """
     count = len(advisories)
     for i, advisory in enumerate(advisories):
@@ -63,7 +65,25 @@ def scrape_advisories(advisories, path='data/miner/advisories'):
                 f.write(r.content)
 
 
-def parse_advisory(path):
+def extract_bugs(path='data/miner/advisories'):
+    """
+    Extracts and returns the bug numbers for all advisories stored in the given
+    path.
+    """
+    advisories = os.listdir(path)
+    count = len(advisories)
+    bugs = []
+    for i, advisory in enumerate(advisories):
+        log.info('Parsing {} of {}'.format(i, count))
+        advisorybugs = _parse_advisory(os.path.join(path, advisory))
+        if len(advisorybugs) == 0:
+            log.error('No referenced bugs for advisory {}'.format(advisory))
+            bugs.extend(advisorybugs)
+
+            return bugs
+
+
+def _parse_advisory(path):
     """
     Returns the bugzilla bug numbers for a given advisory.
     """
@@ -88,19 +108,20 @@ def _get_article_body(content):
     return bs.find('div', attrs={'itemprop': 'articleBody'})
 
 
-def extract_bugs(path='data/miner/advisories'):
+def persist_bugs(bugs, path='data/miner/bugs.pickle'):
     """
-    Extracts and returns the bug numbers for all advisories stored in the given
-    path.
+    Persists a list of extracted bug numbers to the specified file.
     """
-    advisories = os.listdir(path)
-    count = len(advisories)
-    bugs = []
-    for i, advisory in enumerate(advisories):
-        log.info('Parsing {} of {}'.format(i, count))
-        advisorybugs = parse_advisory(os.path.join(path, advisory))
-        if len(advisorybugs) == 0:
-            log.error('No referenced bugs for advisory {}'.format(advisory))
-        bugs.extend(advisorybugs)
+    with open(path, 'wb') as f:
+        pickle.dump(bugs, f)
+
+
+def read_persisted(path='data/miner/bugs.pickle'):
+    """
+    Reads a persisted list of extracted bug numbers from the specified file.
+    """
+    bugs = None
+    with open(path, 'rb') as f:
+        bugs = pickle.load(f)
 
     return bugs
