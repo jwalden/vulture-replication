@@ -49,7 +49,8 @@ def parse_overview(overview_path='data/miner/advisories.html'):
     return advisories
 
 
-def scrape_advisories(advisories, path='data/miner/advisories'):
+def scrape_advisories(advisories, ignore_existing=True,
+                      path='data/miner/advisories'):
     """
     Scrapes the individual advisory pages and stores them in path. Advisories
     need to be of structure (MFSA-Identifier, URL).
@@ -57,7 +58,7 @@ def scrape_advisories(advisories, path='data/miner/advisories'):
     count = len(advisories)
     for i, advisory in enumerate(advisories):
         mfsa_path = os.path.join(path, advisory[0] + '.html')
-        if not os.path.exists(mfsa_path):
+        if not ignore_existing or (ignore_existing and not os.path.exists(mfsa_path)):
             log.info('Scraping {} of {}: {}'.format(i, count, advisory[0]))
             r = requests.get('http://www.mozilla.org' + advisory[1],
                 headers=headers)
@@ -78,9 +79,9 @@ def extract_bugs(path='data/miner/advisories'):
         advisorybugs = _parse_advisory(os.path.join(path, advisory))
         if len(advisorybugs) == 0:
             log.error('No referenced bugs for advisory {}'.format(advisory))
-            bugs.extend(advisorybugs)
+        bugs.extend(advisorybugs)
 
-            return bugs
+    return bugs
 
 
 def _parse_advisory(path):

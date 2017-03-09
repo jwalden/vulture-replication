@@ -61,7 +61,14 @@ if extract_and_persist_advisories:
 if build_and_persist_index:
     print('building and storing index of vulnerability-related commits, this'
           ' may take some time')
-    bug_numbers = vuln.read_persisted()
+    try:
+        bug_numbers = vuln.read_persisted()
+    except IOError:
+        print('ERROR: missing the stored bug numbers from advisories')
+        exit()
+    if bug_numbers is None:
+        print('ERROR: could not read the stored bug numbers')
+        exit()
     try:
         index = combine.create_index(repository_path, bug_numbers)
     except ServerError:
