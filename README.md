@@ -12,6 +12,8 @@ This project makes use of Python 2.7, although Python 3.4+ should work as well. 
 virtualenv venv
 source venv/bin/activate
 ```
+
+
     **Python 3.4+:**
 ```
 python3 -m venv venv
