@@ -5,7 +5,7 @@ Replication study of the "Vulture" paper "Predicting Vulnerable Software Compone
 This project makes use of Python 2.7, although Python 3.4+ should work as well. You can either use Anaconda or set up a virtual environment.
 
 ### Using virtualenv
-1. Create a virtual environment and activate it:
+First, create a virtual environment and activate it:
 
 **Python 2.7:**
 ```
@@ -20,7 +20,7 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-2. Install all the dependencies in the virtual environment:
+Then, install all the dependencies in the virtual environment:
 ```
 pip install -e .
 ```
