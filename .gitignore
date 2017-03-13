@@ -1,5 +1,9 @@
 # General
 *.DS_Store
+
+# vulture specific
+*.pickle
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -88,6 +92,7 @@ celerybeat-schedule
 .venv
 venv/
 ENV/
+venv3/
 
 # Spyder project settings
 .spyderproject
