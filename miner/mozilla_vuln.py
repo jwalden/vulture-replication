@@ -2,7 +2,6 @@ import requests
 import re
 import os
 import logging
-import cPickle as pickle
 
 from bs4 import BeautifulSoup
 
@@ -18,7 +17,7 @@ headers = {'user-agent': 'vulture-replication/0.0.1'}
 pattern = re.compile('^(bug_)?id=([0-9,]+)$')
 
 
-def scrape_overview(store_path='data/miner/advisories.html'):
+def scrape_overview(store_path):
     """
     Scrapes the advisory overview page and stores it in overview_path.
     """
@@ -28,7 +27,7 @@ def scrape_overview(store_path='data/miner/advisories.html'):
         f.write(r.content)
 
 
-def parse_overview(overview_path='data/miner/advisories.html'):
+def parse_overview(overview_path):
     """
     Parses the advisory overview page. Returns a list of tuples of
     (MFSA-Identifier, URL).
@@ -49,15 +48,14 @@ def parse_overview(overview_path='data/miner/advisories.html'):
     return advisories
 
 
-def scrape_advisories(advisories, ignore_existing=True,
-                      path='data/miner/advisories'):
+def scrape_advisories(advisories, dir_path, ignore_existing=True):
     """
-    Scrapes the individual advisory pages and stores them in path. Advisories
-    need to be of structure (MFSA-Identifier, URL).
+    Scrapes the individual advisory pages and stores them in dir_path.
+    Advisories need to be of structure (MFSA-Identifier, URL).
     """
     count = len(advisories)
     for i, advisory in enumerate(advisories):
-        mfsa_path = os.path.join(path, advisory[0] + '.html')
+        mfsa_path = os.path.join(dir_path, advisory[0] + '.html')
         if not ignore_existing or (ignore_existing and not os.path.exists(mfsa_path)):
             log.info('Scraping {} of {}: {}'.format(i, count, advisory[0]))
             r = requests.get('http://www.mozilla.org' + advisory[1],
@@ -66,17 +64,17 @@ def scrape_advisories(advisories, ignore_existing=True,
                 f.write(r.content)
 
 
-def extract_bugs(path='data/miner/advisories'):
+def extract_bugs(dir_path):
     """
     Extracts and returns the bug numbers for all advisories stored in the given
-    path.
+    directory path.
     """
-    advisories = os.listdir(path)
+    advisories = os.listdir(dir_path)
     count = len(advisories)
     bugs = []
     for i, advisory in enumerate(advisories):
         log.info('Parsing {} of {}'.format(i, count))
-        advisorybugs = _parse_advisory(os.path.join(path, advisory))
+        advisorybugs = _parse_advisory(os.path.join(dir_path, advisory))
         if len(advisorybugs) == 0:
             log.error('No referenced bugs for advisory {}'.format(advisory))
         bugs.extend(advisorybugs)
@@ -107,22 +105,3 @@ def _parse_advisory(path):
 def _get_article_body(content):
     bs = BeautifulSoup(content, 'html5lib')
     return bs.find('div', attrs={'itemprop': 'articleBody'})
-
-
-def persist_bugs(bugs, path='data/miner/bugs.pickle'):
-    """
-    Persists a list of extracted bug numbers to the specified file.
-    """
-    with open(path, 'wb') as f:
-        pickle.dump(bugs, f)
-
-
-def read_persisted(path='data/miner/bugs.pickle'):
-    """
-    Reads a persisted list of extracted bug numbers from the specified file.
-    """
-    bugs = None
-    with open(path, 'rb') as f:
-        bugs = pickle.load(f)
-
-    return bugs
