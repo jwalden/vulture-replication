@@ -25,10 +25,6 @@ Then, install all the dependencies in the virtual environment:
 pip install -e .
 ```
 
-### Using Anaconda
-Anaconda is a Python distribution with most if not all of the required modules preinstalled. You can find it on `https://www.continuum.io`.
-
-
 ## Usage
 ### Jupyter Notebooks
 Run the Jupyter Server:
@@ -45,23 +41,7 @@ python miner/runscript.py
 
 There is also a basic help for the script:
 ```
-(venv) $ python miner/runscript.py --help
-usage: runscript.py [-h] [--scrape-overview] [--scrape-advisories]
-                    [--extract-advisories] [--build-commit-index repopath]
-
-Miner for building an index of vulnerability-affected Mozilla components. It
-combines the Mozilla Foundation Security Advisories (MFSA) with the commits in
-the mozilla-central mercurial repository.
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --scrape-overview     scrape and store the MFSA overview page
-  --scrape-advisories   scrape and store the individual advisory pages
-  --extract-advisories  parse stored advisory pages and store found bug
-                        numbers
-  --build-commit-index repopath
-                        build the index for the given repository path and
-                        store it
+python miner/runscript.py --help
 ```
 
 **IMPORTANT:** Please note that scraping the individual advisories will send 1000+ HTTP requests to Mozilla in a short amount of time. Because of this, the individual advisory pages are stored in data/miner/advisories/.
