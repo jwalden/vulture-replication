@@ -177,4 +177,4 @@ if extract_components:
     elapsed = time.time() - start
     serialize.persist(index, COMPONENTS)
     print('done. elapsed time is {} seconds'.format(elapsed))
-    print('')))
+    print('')
