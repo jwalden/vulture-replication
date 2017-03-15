@@ -1,5 +1,6 @@
 import hglib
 
+
 def history_iter(repo_path, revrange=None):
     """
     Generator that yields a tuple of (commit number, node, commit message) for

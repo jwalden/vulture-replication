@@ -4,17 +4,19 @@ import logging
 import time
 from hglib.error import ServerError
 
-import mozilla_vuln as vuln
-import combine
-import serialize
-import components
+from condor.miner import mozilla_vuln as vuln
+from condor.miner import combine
+from condor.miner import components
+from condor.core import serialize
+from condor.core.timer import timeit
 
 
 ADVISORY_OVERVIEW = 'data/miner/advisories.html'
 ADVISORIES_DIR = 'data/miner/advisories/'
 BUGS = 'data/miner/bugs.pickle'
-COMMIT_INDEX = 'data/miner/index.pickle'
+COMMIT_INDEX = 'data/miner/commit_index.pickle'
 FILE_INDEX = 'data/miner/file_index.pickle'
+COMPONENTS = 'data/miner/components.pickle'
 
 
 logging.basicConfig(level=logging.DEBUG,
@@ -134,17 +136,17 @@ if build_and_persist_commit_index:
 
 if build_file_index:
     print('building file index for the stored commit index')
-    start = time.time()
 
     try:
         commit_index = serialize.read(COMMIT_INDEX)
     except IOError:
         print('ERROR: missing the commit index')
         exit()
+
+
     file_index = combine.create_file_index(file_repo_path, commit_index, FILE_INDEX)
     serialize.persist(file_index, FILE_INDEX)
 
-    elapsed = time.time() - start
     print('done. elapsed time is {} seconds'.format(elapsed))
     print('')
 
@@ -152,18 +154,27 @@ if build_file_index:
 if extract_components:
     print('extracting all c, cpp and h files from the repository')
     start = time.time()
-    repo_files = components.get_components(extract_components_path)
+
+    index = components.get_components(extract_components_path)
+
     elapsed = time.time() - start
     print('done. elapsed time is {} seconds'.format(elapsed))
-    no_files = [len(x) for x in repo_files.values()]
+    no_files = [len(x) for x in index.values()]
     largest = no_files.index(max(no_files))
     print('Found {} components with a total of {} files. The largest component '
           'has {} files ({}):'.format(
-              len(repo_files),
+              len(index),
               sum(no_files),
               max(no_files),
-              repo_files.items()[largest][0]
+              index.items()[largest][0]
               ))
-    for f in repo_files.values()[largest]:
-        print(f)
-    print('')
+
+    print('extracting include statements for each component')
+    start = time.time()
+
+    index = components.get_includes(index)
+
+    elapsed = time.time() - start
+    serialize.persist(index, COMPONENTS)
+    print('done. elapsed time is {} seconds'.format(elapsed))
+    print('')))

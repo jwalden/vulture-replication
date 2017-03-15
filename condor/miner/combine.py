@@ -1,7 +1,7 @@
 import re
 import logging
 
-import mozilla_hg as hg
+import condor.miner.mozilla_hg as hg
 
 
 log = logging.getLogger(__name__)
