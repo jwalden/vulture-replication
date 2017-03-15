@@ -1,11 +1,13 @@
 import os
 import argparse
 import logging
+import time
 from hglib.error import ServerError
 
 import mozilla_vuln as vuln
 import combine
 import serialize
+import components
 
 
 ADVISORY_OVERVIEW = 'data/miner/advisories.html'
@@ -37,6 +39,8 @@ parser.add_argument('--build-commit-index', metavar='repopath', type=str,
                     help='build the commit index for the given repository path and store it')
 parser.add_argument('--build-file-index', metavar='repopath', type=str,
                     help='build the file index for the stored commit index and the given repository')
+parser.add_argument('--extract-components', metavar='repopath', type=str,
+                    help='extract the c, cpp and h files for the given repository')
 
 args = vars(parser.parse_args())
 
@@ -54,59 +58,10 @@ build_and_persist_commit_index = repository_path is not None
 file_repo_path = args['build_file_index']
 build_file_index = file_repo_path is not None
 
+# Options for building the components and feature matrix
+extract_components_path = args['extract_components']
+extract_components = extract_components_path is not None
 
-if scrape_overview:
-    print('scraping and storing MFSA overview')
-    vuln.scrape_overview(ADVISORY_OVERVIEW)
-    print('done')
-    print('')
-
-if scrape_advisories:
-    print('scraping and storing individual advisories')
-    advisories = vuln.parse_overview(ADVISORY_OVERVIEW)
-    vuln.scrape_advisories(advisories, ADVISORIES_DIR)
-    print('done')
-    print('')
-
-if extract_and_persist_bugs:
-    print('extracting and storing bug numbers from advisories')
-    bug_numbers = vuln.extract_bugs(ADVISORIES_DIR)
-    serialize.persist(bug_numbers, BUGS)
-    print('done')
-    print('')
-
-if build_and_persist_commit_index:
-    print('building and storing index of vulnerability-related commits, this'
-          ' may take some time')
-    try:
-        bug_numbers = serialize.read(BUGS)
-    except IOError:
-        print('ERROR: missing the stored vulnerability bug numbers from advisories, run --extract-advisories')
-        exit()
-    if bug_numbers is None:
-        print('ERROR: could not read the stored vulnerability bug numbers')
-        exit()
-    try:
-        index = combine.create_commit_index(repository_path, bug_numbers)
-    except ServerError:
-        print('ERROR: provided path is not a valid mercurial repository')
-        exit()
-    serialize.persist(index, COMMIT_INDEX)
-    print('done')
-    print('')
-
-if build_file_index:
-    print('building file index for the stored commit index')
-    try:
-        index = serialize.read(COMMIT_INDEX)
-    except IOError:
-        print('ERROR: missing the commit index')
-        exit()
-    file_index = combine.create_file_index(file_repo_path, index, FILE_INDEX)
-    print('done')
-    for bugno, files in file_index.items():
-        print('{}: {}'.format(bugno, files))
-        print('')
 
 if stats:
     if os.path.exists(COMMIT_INDEX):
@@ -131,3 +86,84 @@ if stats:
     else:
         print('file index does not yet exist')
         print('')
+
+
+if scrape_overview:
+    print('scraping and storing MFSA overview')
+    vuln.scrape_overview(ADVISORY_OVERVIEW)
+    print('done')
+    print('')
+
+
+if scrape_advisories:
+    print('scraping and storing individual advisories')
+    advisories = vuln.parse_overview(ADVISORY_OVERVIEW)
+    vuln.scrape_advisories(advisories, ADVISORIES_DIR)
+    print('done')
+    print('')
+
+
+if extract_and_persist_bugs:
+    print('extracting and storing bug numbers from advisories')
+    bug_numbers = vuln.extract_bugs(ADVISORIES_DIR)
+    serialize.persist(bug_numbers, BUGS)
+    print('done')
+    print('')
+
+
+if build_and_persist_commit_index:
+    print('building and storing index of vulnerability-related commits, this'
+          ' may take some time')
+    try:
+        bug_numbers = serialize.read(BUGS)
+    except IOError:
+        print('ERROR: missing the stored vulnerability bug numbers from advisories, run --extract-advisories')
+        exit()
+    if bug_numbers is None:
+        print('ERROR: could not read the stored vulnerability bug numbers')
+        exit()
+    try:
+        commit_index = combine.create_commit_index(repository_path, bug_numbers)
+    except ServerError:
+        print('ERROR: provided path is not a valid mercurial repository')
+        exit()
+    serialize.persist(commit_index, COMMIT_INDEX)
+    print('done')
+    print('')
+
+
+if build_file_index:
+    print('building file index for the stored commit index')
+    start = time.time()
+
+    try:
+        commit_index = serialize.read(COMMIT_INDEX)
+    except IOError:
+        print('ERROR: missing the commit index')
+        exit()
+    file_index = combine.create_file_index(file_repo_path, commit_index, FILE_INDEX)
+    serialize.persist(file_index, FILE_INDEX)
+
+    elapsed = time.time() - start
+    print('done. elapsed time is {} seconds'.format(elapsed))
+    print('')
+
+
+if extract_components:
+    print('extracting all c, cpp and h files from the repository')
+    start = time.time()
+    repo_files = components.get_components(extract_components_path)
+    elapsed = time.time() - start
+    print('done. elapsed time is {} seconds'.format(elapsed))
+    no_files = [len(x) for x in repo_files.values()]
+    largest = no_files.index(max(no_files))
+    print('Found {} components with a total of {} files. The largest component '
+          'has {} files ({}):'.format(
+              len(repo_files),
+              sum(no_files),
+              max(no_files),
+              repo_files.items()[largest][0]
+              ))
+    for f in repo_files.values()[largest]:
+        print(f)
+    print('')

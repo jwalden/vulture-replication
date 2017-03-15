@@ -33,7 +33,7 @@ def create_commit_index(repo_path, bugs):
 def create_file_index(repo_path, commit_index, path):
     """
     Creates the file index for the given commit index. The file index contains
-    the changed files for each bug number as dict: {bugno: [(flag, file), ...]}
+    the modified files for each bug number as dict: {bugno: [(flag, file), ...]}
     """
     file_index = {}
     for bugno, commits in commit_index.items():
