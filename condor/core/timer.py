@@ -1,6 +1,10 @@
 import time
+import logging
 
 from functools import wraps
+
+
+log = logging.getLogger(__name__)
 
 
 def timeit(func):
@@ -15,8 +19,9 @@ def timeit(func):
         ret = func(*args, **kwargs)
 
         elapsed = time.time() - start
-        print('elapsed time: {} seconds'.format(elapsed))
+        print('Elapsed time for {}: {} seconds'.format(func.__name__, elapsed))
+        log.debug('Elapsed time for {}: {} seconds'.format(func.__name__, elapsed))
 
         return ret
-    
+
     return wrapper

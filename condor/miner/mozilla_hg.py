@@ -1,4 +1,8 @@
 import hglib
+import logging
+
+
+log = logging.getLogger(__name__)
 
 
 def history_iter(repo_path, revrange=None):
@@ -25,18 +29,20 @@ def history(repo_path, revrange=None):
         for commit in log:
             history.append((commit[0], commit[1], commit[5]))
 
-        return history
+    return history
 
 
-def files(repo_path, commit):
+def files(repo_path, commits):
     """
-    Returns a list of the changed files for the given repository and commit.
-    Commit of structure (commit number, node, message). Returned list of
-    structure [(code, filename), ...]
+    Returns the changed files for the given repository and commits.
+    Commit of structure (commit number, node, message). Returned dict of
+    structure {revision: [(code, filename), ...], ...}
     """
-
-    changed = []
+    changed = {}
     with hglib.open(repo_path) as client:
-        changed = client.status(change=commit[0], modified=True)
+        for commit in commits:
+            rev = commit[0]
+            log.debug('Get changeset for rev {}'.format(rev))
+            changed[rev] = client.status(change=rev, modified=True)
 
     return changed

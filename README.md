@@ -2,7 +2,7 @@
 Replication study of the "Vulture" paper "Predicting Vulnerable Software Components" (CCS'07).
 
 ## Setup
-This project makes use of Python 2.7, although Python 3.4+ should work as well. You can either use Anaconda or set up a virtual environment.
+This project makes use of Python 2.7, although Python 3.4+ should work as well.
 
 ### Using virtualenv
 First, create a virtual environment and activate it:
@@ -60,22 +60,22 @@ The command to build the index from scratch is:
 python condor/miner/runscript.py --extract-advisories --build-commit-index /path/to/mozilla-central
 ```
 
-This may take some time (~ 20 minutes), as 300'000+ commit messages have to be checked. But you only have to build the index again if you updated the repository. The advisory extraction only has to be run if you have scraped some new advisories. This index mainly exists for convenience. Without this intermediate step, building the file index from scratch would take about 40 minutes.
+This may take some time (~ 20 minutes), as 300'000+ commit messages have to be checked against multiple regular expressions. But you only have to build the index again if you updated the repository. The advisory extraction only has to be run if you have scraped some new advisories. This index mainly exists for convenience. Without this intermediate step, building the file index from scratch would take about 40 minutes.
 
 
 The structure of the index is as follows:
 ```
 {
-    u'996715': [('185152', '9d8a5c8d8328af315768f1fb50b5a1fc3ab01d4e', 'bug 996715: Remove the code that bails when determining if the second instruction in a chunk is a branch. (r=dougc)')],
-    u'996883': [('179313', 'd8300867f3f219a3d183ee0577d548d04f802d8c', 'Land bug 996883. r=mjrosenb')],
-    u'997795': [('179215', 'ba276673a564f5906115959a1823250123f8ca4a', 'Bug 997795 - Cleanup decodings. r=dkeeler')]
+  u'996715': [('185152', '9d8a5c8d8328af315768f1fb50b5a1fc3ab01d4e', 'bug 996715: Remove the code that bails when determining if the second instruction in a chunk is a branch. (r=dougc)')],
+  u'996883': [('179313', 'd8300867f3f219a3d183ee0577d548d04f802d8c', 'Land bug 996883. r=mjrosenb')],
+  u'997795': [('179215', 'ba276673a564f5906115959a1823250123f8ca4a', 'Bug 997795 - Cleanup decodings. r=dkeeler')]
 }
 ```
 The key is the vulnerability-related bug number and the value is a list of affected commits `(commit number, node, commit message)`.
 
 
 #### Building the File Index
-This index contains the modified files for each commit. It is also stored in a binary format and not pushed to the git repository. Due to the nature of the `hglib` module, this also takes about 20 minutes to run.
+This index contains the modified files for each commit. It is also stored in a binary format and not pushed to the git repository. Due to the nature of the `hglib` module, this takes about 10 minutes to run.
 
 ```
 python condor/miner/runscript.py --build-file-index /path/to/mozilla-central
@@ -84,15 +84,17 @@ python condor/miner/runscript.py --build-file-index /path/to/mozilla-central
 The structure of the index is as follows:
 ```
 {
-    u'995817': [('M', 'js/src/jit/MIR.h'),
-                ('M', 'js/src/jit/RangeAnalysis.cpp'),
-                ('M', 'js/src/jit/arm/CodeGenerator-arm.cpp'),
-                ('M', 'js/src/jit/shared/CodeGenerator-x86-shared.cpp')],
-    u'996536': [('M', 'js/src/jsinfer.cpp')],
-    u'996715': [('M', 'js/src/jit/shared/IonAssemblerBufferWithConstantPools.h')]
+  u'992968': {'178813': [('M', 'js/src/jit/CodeGenerator.cpp'),
+                         ('M', 'js/src/jit/shared/CodeGenerator-shared.h')]},
+  u'993546': {'178550': [('M', 'extensions/spellcheck/hunspell/src/hunspell_alloc_hooks.h'),
+                         ('M', 'extensions/spellcheck/hunspell/src/mozHunspell.cpp'),
+                         ('M', 'extensions/spellcheck/hunspell/src/mozHunspell.h'),
+                         ('M', 'gfx/thebes/gfxAndroidPlatform.cpp'),
+                         ('M', 'xpcom/base/nsIMemoryReporter.idl'),
+                         ('M', 'xpcom/build/nsXPComInit.cpp')]},
 }
 ```
-The key is again the vulnerability-related bug number, but the value is a list of modified files (`'M'`) as returned by `hglib.status`.
+The key is again the vulnerability-related bug number. The value is another dict with the revision number as key and a list of files as value. The list of files contains the tuples as returned by the `status` function of a `hglib` client, i.e. `(code, file)`.
 
 
 #### Extracting Components
@@ -102,33 +104,24 @@ This is the third index which fetches all the `.c`, `.cpp` and `.h` files from t
 The structure of the index is as follows:
 ```
 {
-    'xpcAccessibleHyperLink': {'files': [('/home/hklauser/school/semester-6/BA/repos/mozilla-central/accessible/xpcom',
-                                          'xpcAccessibleHyperLink.cpp'),
-                                         ('/home/hklauser/school/semester-6/BA/repos/mozilla-central/accessible/xpcom',
-                                          'xpcAccessibleHyperLink.h')],
-                               'includes': set(['Accessible-inl.h',
-                                                'nsIAccessibleHyperLink.h',
-                                                'nsNetUtil.h',
-                                                'xpcAccessibleDocument.h'])},
-    'xpcAccessibleHyperText': {'files': [('/home/hklauser/school/semester-6/BA/repos/mozilla-central/accessible/xpcom',
-                                          'xpcAccessibleHyperText.cpp'),
-                                         ('/home/hklauser/school/semester-6/BA/repos/mozilla-central/accessible/xpcom',
-                                          'xpcAccessibleHyperText.h')],
-                               'includes': set(['Accessible-inl.h',
-                                                'HyperTextAccessible-inl.h',
-                                                'HyperTextAccessible.h',
-                                                'TextRange.h',
-                                                'nsIAccessibleEditableText.h',
-                                                'nsIAccessibleHyperText.h',
-                                                'nsIAccessibleText.h',
-                                                'nsIMutableArray.h',
-                                                'nsIPersistentProperties2.h',
-                                                'xpcAccessibleDocument.h',
-                                                'xpcAccessibleGeneric.h',
-                                                'xpcAccessibleHyperText.h',
-                                                'xpcAccessibleTextRange.h'])}
+  'voip_metric': {'files': [('/home/hklauser/school/semester-6/BA/repos/mozilla-central/media/webrtc/trunk/webrtc/modules/rtp_rtcp/source/rtcp_packet', 'voip_metric.h')],
+                  'includes': set(['webrtc/base/basictypes.h', 'webrtc/modules/include/module_common_types.h']),
+                  'vulncount': 0},
+  'vorbis_analysis': {'files': [('/home/hklauser/school/semester-6/BA/repos/mozilla-central/media/libvorbis/lib', 'vorbis_analysis.c')],
+                      'includes': set(['codec_internal.h',
+                                       'math.h',
+                                       'misc.h',
+                                       'ogg/ogg.h',
+                                       'os.h',
+                                       'registry.h',
+                                       'scales.h',
+                                       'stdio.h',
+                                       'string.h',
+                                       'vorbis/codec.h']),
+                      'vulncount': 2},
 }
 ```
 The key is the component name. The value is again a dict consisting of two key/value pairs:
 - `files`: A list of files which define that component (tuple of path and filename)
 - `includes`: A set of all the includes of that component
+- `vulncount`: The number of vulnerability-related bug reports for this component

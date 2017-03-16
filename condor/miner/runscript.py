@@ -31,6 +31,9 @@ the mozilla-central mercurial repository.
 ''')
 parser.add_argument('--stats', action='store_true',
                     help='show statistics for the existing indices')
+parser.add_argument('--print', action='store',
+                    choices=['commits', 'files', 'components'],
+                    help='print the contents of the specified data structure')
 parser.add_argument('--scrape-overview', action='store_true',
                     help='scrape and store the MFSA overview page')
 parser.add_argument('--scrape-advisories', action='store_true',
@@ -48,6 +51,7 @@ args = vars(parser.parse_args())
 
 # General Options
 stats = args['stats']
+print_data = args['print']
 
 # Options for Mozilla Foundation Security Advisories
 scrape_overview = args['scrape_overview']
@@ -146,8 +150,6 @@ if build_file_index:
 
     file_index = combine.create_file_index(file_repo_path, commit_index, FILE_INDEX)
     serialize.persist(file_index, FILE_INDEX)
-
-    print('done. elapsed time is {} seconds'.format(elapsed))
     print('')
 
 
@@ -159,10 +161,10 @@ if extract_components:
 
     elapsed = time.time() - start
     print('done. elapsed time is {} seconds'.format(elapsed))
-    no_files = [len(x) for x in index.values()]
+    no_files = [len(x['files']) for x in index.values()]
     largest = no_files.index(max(no_files))
     print('Found {} components with a total of {} files. The largest component '
-          'has {} files ({}):'.format(
+          'has {} files ({})'.format(
               len(index),
               sum(no_files),
               max(no_files),
@@ -175,6 +177,26 @@ if extract_components:
     index = components.get_includes(index)
 
     elapsed = time.time() - start
-    serialize.persist(index, COMPONENTS)
     print('done. elapsed time is {} seconds'.format(elapsed))
+
+    print('assigning vulnerability count to each component')
+    start = time.time()
+
+    index = combine.label_components(serialize.read(FILE_INDEX), index)
+
+    elapsed = time.time() - start
+    print('done. elapsed time is {} seconds'.format(elapsed))
+    serialize.persist(index, COMPONENTS)
     print('')
+
+
+if print_data is not None:
+    if print_data == 'commits':
+        index = serialize.read(COMMIT_INDEX)
+    elif print_data == 'files':
+        index = serialize.read(FILE_INDEX)
+    elif print_data == 'components':
+        index = serialize.read(COMPONENTS)
+
+    import pprint
+    pprint.pprint(index)
