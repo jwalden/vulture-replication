@@ -2,11 +2,13 @@ import os
 import argparse
 import logging
 import time
+import numpy as np
 from hglib.error import ServerError
 
 from condor.miner import mozilla_vuln as vuln
 from condor.miner import combine
 from condor.miner import components
+from condor.miner import dataset
 from condor.core import serialize
 from condor.core.timer import timeit
 
@@ -25,9 +27,13 @@ logging.basicConfig(level=logging.DEBUG,
                     filemode='w')
 
 parser = argparse.ArgumentParser(description='''
-Miner for building an index of vulnerability-affected Mozilla components. It
+Miner for building indices of vulnerability-affected Mozilla components. It
 combines the Mozilla Foundation Security Advisories (MFSA) with the commits in
 the mozilla-central mercurial repository.
+
+The generated indices can then be combined into information about each
+component. This information can then be used to create a NumPy dataset (feature
+matrix) to train a machine learning model.
 ''')
 parser.add_argument('--stats', action='store_true',
                     help='show statistics for the existing indices')
@@ -45,7 +51,9 @@ parser.add_argument('--build-commit-index', metavar='repopath', type=str,
 parser.add_argument('--build-file-index', metavar='repopath', type=str,
                     help='build the file index for the stored commit index and the given repository')
 parser.add_argument('--extract-components', metavar='repopath', type=str,
-                    help='extract the c, cpp and h files for the given repository')
+                    help='combine indices and the repository structure into information about components')
+parser.add_argument('--build-dataset', action='store_true',
+                    help='build the numpy dataset (feature matrix) from the stored component information')
 
 args = vars(parser.parse_args())
 
@@ -67,6 +75,7 @@ build_file_index = file_repo_path is not None
 # Options for building the components and feature matrix
 extract_components_path = args['extract_components']
 extract_components = extract_components_path is not None
+build_dataset = args['build_dataset']
 
 
 if stats:
@@ -92,6 +101,18 @@ if stats:
     else:
         print('file index does not yet exist')
         print('')
+
+
+if print_data is not None:
+    if print_data == 'commits':
+        index = serialize.read(COMMIT_INDEX)
+    elif print_data == 'files':
+        index = serialize.read(FILE_INDEX)
+    elif print_data == 'components':
+        index = serialize.read(COMPONENTS)
+
+    import pprint
+    pprint.pprint(index)
 
 
 if scrape_overview:
@@ -190,13 +211,15 @@ if extract_components:
     print('')
 
 
-if print_data is not None:
-    if print_data == 'commits':
-        index = serialize.read(COMMIT_INDEX)
-    elif print_data == 'files':
-        index = serialize.read(FILE_INDEX)
-    elif print_data == 'components':
-        index = serialize.read(COMPONENTS)
+if build_dataset:
+    print('building dataset')
+    start = time.time()
 
-    import pprint
-    pprint.pprint(index)
+    feature_matrix = dataset.from_components(serialize.read(COMPONENTS))
+    serialize.persist(feature_matrix, 'data/feature_matrix.pickle')
+
+    elapsed = time.time() - start
+    print('done. elapsed time is {} seconds'.format(elapsed))
+
+
+print(serialize.read('data/feature_matrix.pickle'))
