@@ -111,7 +111,11 @@ if stats:
         print('the components have not yet been extracted.')
         print('')
 
-    if not os.path.exists(DATASET):
+    if os.path.exists(DATASET):
+        matrix = dataset.from_sparse(serialize.read(DATASET))[0]
+        print('the shape of the feature matrix is {}'.format(matrix.shape))
+        print('')
+    else:
         print('the feature matrix has not yet been built.')
         print('')
 

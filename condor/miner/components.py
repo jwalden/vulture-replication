@@ -70,6 +70,7 @@ def get_includes(components):
             with open(os.path.join(identifier[0], identifier[1]), 'r') as f:
                 content = f.read()
                 includes.update([m[1] for m in pattern.findall(content)])
+        includes = set([os.path.split(include)[-1] for include in includes])
         extended[component]['includes'] = includes
 
     return extended
