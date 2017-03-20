@@ -19,6 +19,7 @@ BUGS = 'data/miner/bugs.pickle'
 COMMIT_INDEX = 'data/miner/commit_index.pickle'
 FILE_INDEX = 'data/miner/file_index.pickle'
 COMPONENTS = 'data/miner/components.pickle'
+DATASET = 'data/feature_matrix_sparse.pickle'
 
 
 logging.basicConfig(level=logging.DEBUG,
@@ -79,9 +80,13 @@ build_dataset = args['build_dataset']
 
 
 if stats:
+    if not os.path.exists(BUGS):
+        print('the list of bugs has not yet been extracted from the advisories.')
+        print('')
+
     if os.path.exists(COMMIT_INDEX):
         commit_index = serialize.read(COMMIT_INDEX)
-        print('The commit index contains {} vulnerability-related bug numbers. {} of'
+        print('the commit index contains {} vulnerability-related bug numbers. {} of'
               ' those could be assigned to {} commits in the repository.'.format(
                 len(commit_index.keys()),
                 len(filter(lambda x: len(x) != 0, commit_index.values())),
@@ -94,12 +99,20 @@ if stats:
 
     if os.path.exists(FILE_INDEX):
         file_index = serialize.read(FILE_INDEX)
-        print('The file index contains {} modified files.'.format(
+        print('the file index contains {} modified files.'.format(
             sum(len(x) for x in file_index.values())
         ))
         print('')
     else:
         print('file index does not yet exist')
+        print('')
+
+    if not os.path.exists(COMPONENTS):
+        print('the components have not yet been extracted.')
+        print('')
+
+    if not os.path.exists(DATASET):
+        print('the feature matrix has not yet been built.')
         print('')
 
 
@@ -216,10 +229,8 @@ if build_dataset:
     start = time.time()
 
     feature_matrix = dataset.from_components(serialize.read(COMPONENTS))
-    serialize.persist(feature_matrix, 'data/feature_matrix.pickle')
+    sparse = dataset.to_sparse(feature_matrix)
+    serialize.persist(sparse, DATASET)
 
     elapsed = time.time() - start
     print('done. elapsed time is {} seconds'.format(elapsed))
-
-
-print(serialize.read('data/feature_matrix.pickle'))
