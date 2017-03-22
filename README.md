@@ -42,7 +42,7 @@ jupyter notebook
 This should open Jupyter in a browser window at `http://localhost:8888`. From there you can open, modify and run the individual notebooks.
 
 ### Miner
-There is a basic run script for the miner application, located in the miner directory. It has to be run from the project root directory:
+There is a basic run script for the miner application, located in the root directory. It has to be run from the project root directory:
 ```
 python condor-cli.py
 ```
