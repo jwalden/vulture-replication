@@ -7,7 +7,7 @@ from condor.condor import Condor
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s',
-                    filename='miner.log',
+                    filename='condor.log',
                     filemode='w')
 
 parser = argparse.ArgumentParser(description='''
