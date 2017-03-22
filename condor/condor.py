@@ -1,0 +1,166 @@
+import os.path
+from hglib.error import ServerError
+from itertools import chain
+
+from core.config import Config
+from core import serialize
+from core.timer import timeit
+from miner import mozilla_vuln as vuln
+from miner import combine
+from miner import components
+from miner import dataset
+
+
+class Condor:
+
+    def __init__(self, repopath=None):
+        self.config = Config()
+        self.repopath = repopath
+
+
+    def print_stats(self):
+        print('-- VULNERABILITY BUG LIST --')
+        if os.path.exists(self.config.bugs):
+            bugs = serialize.read(self.config.bugs)
+            print('{} vulnerability-related bug numbers total'.format(len(bugs)))
+            print('{} distinct vulnerability-related bug numbers'.format(
+                len(set(bugs))
+            ))
+        else:
+            print('the list of bugs has not yet been extracted from the advisories')
+        print('')
+
+        print('-- COMMIT INDEX --')
+        if os.path.exists(self.config.commit_index):
+            commit_index = serialize.read(self.config.commit_index)
+            print('{} vulnerability-related bug numbers'.format(
+                len(commit_index.keys())
+            ))
+            print('{} bug numbers assigned to {} commits'.format(
+                len(filter(lambda x: len(x) != 0, commit_index.values())),
+                sum(len(x) for x in commit_index.values())
+            ))
+        else:
+            print('the commit index does not yet exist')
+        print('')
+
+        print('-- FILE INDEX --')
+        if os.path.exists(self.config.file_index):
+            file_index = serialize.read(self.config.file_index)
+            print('{} files flagged as modified in regards to {} bugs'.format(
+                sum(len(x) for x in file_index.values()),
+                len(file_index.keys())
+            ))
+        else:
+            print('file index does not yet exist')
+        print('')
+
+        print('-- COMPONENTS --')
+        if os.path.exists(self.config.components):
+            components = serialize.read(self.config.components)
+            print('{} components with {} files'.format(
+                len(components.keys()),
+                sum(len(x['files']) for x in components.values())
+            ))
+            print('{} distinct includes'.format(
+                len(set(chain.from_iterable([c['includes'] for c in components.values()])))
+            ))
+        else:
+            print('the components have not yet been extracted')
+        print('')
+
+        print('-- DATA SET --')
+        if os.path.exists(self.config.dataset):
+            matrix = dataset.from_sparse(serialize.read(self.config.dataset))[0]
+            print('the shape of the feature matrix is {}'.format(matrix.shape))
+        else:
+            print('the feature matrix has not yet been built')
+
+    @timeit
+    def scrape_mfsa_overview(self):
+        print('scraping and storing MFSA overview')
+        vuln.scrape_overview(self.config.mfsa_overview)
+        print('done')
+
+    @timeit
+    def scrape_mfsa_pages(self):
+        print('scraping and storing individual advisories')
+        advisories = vuln.parse_overview(self.config.mfsa_overview)
+        vuln.scrape_advisories(advisories, self.config.mfsa_dir)
+        print('done')
+
+    @timeit
+    def extract_bugs(self):
+        print('extracting and storing bug numbers from advisories')
+        bug_numbers = vuln.extract_bugs(self.config.mfsa_dir)
+        serialize.persist(bug_numbers, self.config.bugs)
+        print('done')
+
+    @timeit
+    def build_commit_index(self):
+        print('building and storing index of vulnerability-related commits, this'
+              ' may take some time')
+        try:
+            bug_numbers = serialize.read(self.config.bugs)
+        except IOError:
+            print('ERROR: missing the stored vulnerability bug numbers from advisories, run --extract-advisories')
+            exit(1)
+        if bug_numbers is None:
+            print('ERROR: could not read the stored vulnerability bug numbers')
+            exit(1)
+        try:
+            commit_index = combine.create_commit_index(self.repopath, bug_numbers)
+        except ServerError:
+            print('ERROR: provided path is not a valid mercurial repository')
+            exit(1)
+        serialize.persist(commit_index, self.config.commit_index)
+        print('done')
+
+    @timeit
+    def build_file_index(self):
+        print('building file index for the stored commit index')
+
+        try:
+            commit_index = serialize.read(self.config.commit_index)
+        except IOError:
+            print('ERROR: missing the commit index')
+            exit(1)
+
+        file_index = combine.create_file_index(self.repopath, commit_index)
+        serialize.persist(file_index, self.config.file_index)
+
+    @timeit
+    def extract_components(self):
+        print('extracting all c, cpp and h files from the repository')
+
+        index = components.get_components(self.repopath)
+
+        print('done')
+        no_files = [len(x['files']) for x in index.values()]
+        largest = no_files.index(max(no_files))
+        print('found {} components with a total of {} files. The largest component '
+              'has {} files ({})'.format(
+                  len(index),
+                  sum(no_files),
+                  max(no_files),
+                  index.items()[largest][0]
+                  ))
+
+        print('extracting include statements for each component')
+        index = components.get_includes(index)
+
+        print('assigning vulnerability count to each component')
+        index = combine.label_components(serialize.read(self.config.file_index), index)
+        serialize.persist(index, self.config.components)
+
+        print('done')
+
+    @timeit
+    def build_dataset(self):
+        print('building dataset')
+
+        feature_matrix = dataset.from_components(serialize.read(self.config.components))
+        sparse = dataset.to_sparse(feature_matrix)
+        serialize.persist(sparse, self.config.dataset)
+
+        print('done')

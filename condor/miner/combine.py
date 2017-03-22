@@ -6,7 +6,6 @@ from itertools import chain
 
 import condor.miner.mozilla_hg as hg
 from condor.miner.components import component_name
-from condor.core.timer import timeit
 
 
 log = logging.getLogger(__name__)
@@ -35,8 +34,7 @@ def create_commit_index(repo_path, bugs):
     return index
 
 
-@timeit
-def create_file_index(repo_path, commit_index, path):
+def create_file_index(repo_path, commit_index):
     """
     Creates the file index for the given commit index. The file index contains
     the list of modified files for each bug number and revision as dict:
