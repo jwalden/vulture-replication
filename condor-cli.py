@@ -24,11 +24,13 @@ intermediate indices can then be combined into the final data set.
 ''')
 parser.add_argument('--stats', action='store_true',
                     help='show statistics for the existing data structures')
+parser.add_argument('-s', '--scrape-complete', action='store_true',
+                    help='scrape and store both the MFSA overview page and the individual MFSA pages')
 parser.add_argument('--scrape-overview', action='store_true',
                     help='scrape and store the MFSA overview page')
 parser.add_argument('--scrape-advisories', action='store_true',
                     help='scrape and store the individual advisory pages')
-parser.add_argument('--build-complete', action='store_true',
+parser.add_argument('-b', '--build-complete', action='store_true',
                     help='build the complete data set from scratch, except scraping the MFSA`s')
 parser.add_argument('--extract-bugs', action='store_true',
                     help='parse stored advisory pages, extract and store bug numbers')
@@ -57,6 +59,10 @@ condor = Condor(args['repo'])
 
 if args['stats']:
     condor.print_stats()
+
+if args['scrape_complete']:
+    condor.scrape_mfsa_overview()
+    condor.scrape_mfsa_pages()
 
 if args['scrape_overview']:
     condor.scrape_mfsa_overview()
