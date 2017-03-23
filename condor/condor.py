@@ -141,7 +141,7 @@ class Condor:
     def extract_components(self):
         print('extracting all c, cpp and h files from the repository')
 
-        index = combine.get_components(self.repopath)
+        index = combine.create_components(self.repopath)
 
         print('done')
         no_files = [len(x['files']) for x in index.values()]

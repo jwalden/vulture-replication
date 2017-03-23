@@ -106,8 +106,8 @@ def create_components(repo_path):
 
 def get_includes_fs(components):
     """
-    Collects the include statements for each component. Requires a dict of
-    structure: {component: [(path, file), ...])}
+    Collects the include statements for each component from the file system.
+    Requires a dict of structure: {component: [(path, file), ...])}
     Returns an extended component dict of structure:
     {
     component: {
