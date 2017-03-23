@@ -7,7 +7,6 @@ from core import serialize
 from core.timer import timeit
 from miner import mozilla_vuln as vuln
 from miner import combine
-from miner import components
 from miner import dataset
 
 
@@ -142,7 +141,7 @@ class Condor:
     def extract_components(self):
         print('extracting all c, cpp and h files from the repository')
 
-        index = components.get_components(self.repopath)
+        index = combine.get_components(self.repopath)
 
         print('done')
         no_files = [len(x['files']) for x in index.values()]
@@ -156,7 +155,7 @@ class Condor:
                   ))
 
         print('extracting include statements for each component')
-        index = components.get_includes(index)
+        index = combine.get_includes_fs(index)
 
         print('assigning vulnerability count to each component')
         index = combine.label_components(serialize.read(self.config.file_index), index)
