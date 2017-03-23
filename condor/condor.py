@@ -47,9 +47,12 @@ class Condor:
         print('-- FILE INDEX --')
         if os.path.exists(self.config.file_index):
             file_index = serialize.read(self.config.file_index)
-            print('{} files flagged as modified in regards to {} bugs'.format(
+            print('{} revisions in regards to {} vulnerability-related bugs'.format(
                 sum(len(x) for x in file_index.values()),
                 len(file_index.keys())
+            ))
+            print('{} files flagged as modified'.format(
+                len(list(chain.from_iterable(chain.from_iterable([x.values() for x in file_index.values()]))))
             ))
         else:
             print('file index does not yet exist')
@@ -64,6 +67,12 @@ class Condor:
             ))
             print('{} distinct includes'.format(
                 len(set(chain.from_iterable([c['includes'] for c in components.values()])))
+            ))
+            print('{} components flagged as vulnerable'.format(
+                sum(1 if x['vulncount'] > 0 else 0 for x in components.values()),
+            ))
+            print('{} vulnerability counts in total'.format(
+                sum(x['vulncount'] for x in components.values())
             ))
         else:
             print('the components have not yet been extracted')

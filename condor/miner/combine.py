@@ -73,6 +73,11 @@ def  _create_rev_index(commit_index):
 
 
 def label_components(file_index, components):
+    """
+    Combines the file index with the component data structure and flags
+    componets as vulnerable. Returns a new component data structure with
+    updated vulnerability counts.
+    """
     nokey = []
     total = 0
     labeled = components.copy()
