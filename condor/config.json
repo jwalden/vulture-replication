@@ -1,0 +1,16 @@
+{
+  "miner": {
+    "files": {
+      "mfsa_overview": "data/miner/advisories.html",
+      "extracted_bugs": "data/miner/bugs.pickle",
+      "commit_index": "data/miner/commit_index.pickle",
+      "file_index": "data/miner/file_index.pickle",
+      "components": "data/miner/components.pickle",
+      "dataset": "data/feature_matrix_sparse.pickle"
+    },
+
+    "directories": {
+      "mfsa_pages": "data/miner/advisories/"
+    }
+  }
+}

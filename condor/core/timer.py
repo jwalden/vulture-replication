@@ -19,7 +19,7 @@ def timeit(func):
         ret = func(*args, **kwargs)
 
         elapsed = time.time() - start
-        print('Elapsed time for {}: {} seconds'.format(func.__name__, elapsed))
+        print('elapsed time: {} seconds'.format(elapsed))
         log.debug('Elapsed time for {}: {} seconds'.format(func.__name__, elapsed))
 
         return ret
