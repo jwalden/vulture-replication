@@ -5,7 +5,7 @@ from itertools import chain
 from core.config import Config
 from core import serialize
 from core.timer import timeit
-from miner import mozilla_vuln as vuln
+from miner import mozilla_mfsa as mfsa
 from miner import combine
 from miner import dataset
 
@@ -87,20 +87,20 @@ class Condor:
     @timeit
     def scrape_mfsa_overview(self):
         print('scraping and storing MFSA overview')
-        vuln.scrape_overview(self.config.mfsa_overview)
+        mfsa.scrape_overview(self.config.mfsa_overview)
         print('done')
 
     @timeit
     def scrape_mfsa_pages(self):
         print('scraping and storing individual advisories')
-        advisories = vuln.parse_overview(self.config.mfsa_overview)
-        vuln.scrape_advisories(advisories, self.config.mfsa_dir)
+        advisories = mfsa.parse_overview(self.config.mfsa_overview)
+        mfsa.scrape_advisories(advisories, self.config.mfsa_dir)
         print('done')
 
     @timeit
     def extract_bugs(self):
         print('extracting and storing bug numbers from advisories')
-        bug_numbers = vuln.extract_bugs(self.config.mfsa_dir)
+        bug_numbers = mfsa.extract_bugs(self.config.mfsa_dir)
         serialize.persist(bug_numbers, self.config.bugs)
         print('done')
 
