@@ -115,31 +115,30 @@ python condor-cli.py --build-file-index --repo /path/to/mozilla-central
 The structure of the index is as follows:
 ```
 {
-  u'992968': {'178813': [('M', 'js/src/jit/CodeGenerator.cpp'),
-                         ('M', 'js/src/jit/shared/CodeGenerator-shared.h')]},
-  u'993546': {'178550': [('M', 'extensions/spellcheck/hunspell/src/hunspell_alloc_hooks.h'),
-                         ('M', 'extensions/spellcheck/hunspell/src/mozHunspell.cpp'),
-                         ('M', 'extensions/spellcheck/hunspell/src/mozHunspell.h'),
-                         ('M', 'gfx/thebes/gfxAndroidPlatform.cpp'),
-                         ('M', 'xpcom/base/nsIMemoryReporter.idl'),
-                         ('M', 'xpcom/build/nsXPComInit.cpp')]},
+  u'992968': {'178813': ['js/src/jit/CodeGenerator.cpp',
+                         'js/src/jit/shared/CodeGenerator-shared.h']},
+  u'993546': {'178550': ['extensions/spellcheck/hunspell/src/hunspell_alloc_hooks.h'),
+                         'extensions/spellcheck/hunspell/src/mozHunspell.cpp',
+                         'extensions/spellcheck/hunspell/src/mozHunspell.h',
+                         'gfx/thebes/gfxAndroidPlatform.cpp',
+                         'xpcom/base/nsIMemoryReporter.idl',
+                         'xpcom/build/nsXPComInit.cpp']},
 }
 ```
-The key is again the vulnerability-related bug number. The value is another dict with the revision number as key and a list of files as value. The list of files contains the tuples as returned by the `status` function of a `hglib` client, i.e. `(code, file)`.
+The key is again the vulnerability-related bug number. The value is another dict with the revision number as key and a list of files as value.
 
 
 #### Extracting Components
-This is the third index which fetches all the `.c`, `.cpp` and `.h` files from the repository and looks at the import statements. Building of this index is rather quick, it takes about 10-20 seconds.
-
+This is the third index which fetches all the `.c`, `.cpp` and `.h` files from the repository and looks at the import statements. Building of this index is rather quick, it takes about 10-20 seconds, though adding the includes from the revision history (`--add-rev-history`) is very slow. The latter is only needed when you want to build the data set with the history included (`--build-dataset history` instead of `--build-dataset current`).
 
 The structure of the index is as follows:
 ```
 {
   'voip_metric': {'files': [('/home/hklauser/school/semester-6/BA/repos/mozilla-central/media/webrtc/trunk/webrtc/modules/rtp_rtcp/source/rtcp_packet', 'voip_metric.h')],
-                  'includes': set(['webrtc/base/basictypes.h', 'webrtc/modules/include/module_common_types.h']),
+                  'includes': [set(['webrtc/base/basictypes.h'], 'webrtc/modules/include/module_common_types.h']),
                   'vulncount': 0},
   'vorbis_analysis': {'files': [('/home/hklauser/school/semester-6/BA/repos/mozilla-central/media/libvorbis/lib', 'vorbis_analysis.c')],
-                      'includes': set(['codec_internal.h',
+                      'includes': [set(['codec_internal.h',
                                        'math.h',
                                        'misc.h',
                                        'ogg/ogg.h',
@@ -148,21 +147,22 @@ The structure of the index is as follows:
                                        'scales.h',
                                        'stdio.h',
                                        'string.h',
-                                       'vorbis/codec.h']),
+                                       'vorbis/codec.h'])],
                       'vulncount': 2},
 }
 ```
 The key is the component name. The value is again a dict consisting of three key/value pairs:
 - `files`: A list of files which define that component (tuple of path and filename)
-- `includes`: A set of all the includes of that component
+- `includes`: A list of sets of all the includes of that component. The individual sets represent the includes for different revisions and the first set represents the current (checked out) revision.
 - `vulncount`: The number of vulnerability-related bug reports for this component
 
 
 #### Building the Data Set (Feature Matrix)
-The components data structure contains all the information needed to build the feature matrix:
+The components data structure contains all the information needed to build the feature matrix, either just from the current revision or including the revision history:
 
 ```
-python condor-cli.py --build-dataset
+python condor-cli.py --build-dataset current
+python condor-cli.py --build-dataset history
 ```
 
 This will store the data set in a sparse format. It can be read again with the `from_sparse` function in `condor/miner/dataset.py`. It returns a tuple: `(numpy feature matrix, row names, column names)`. The last column in the feature matrix contains the targets, i.e. the vulnerability vector.

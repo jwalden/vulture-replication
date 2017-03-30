@@ -39,7 +39,7 @@ def create_file_index(repo_path, commit_index):
     the list of modified files for each bug number and revision as dict:
     {
         bugno: {
-            revision: [(flag, file), ...],
+            revision: [file, ...],
             ...
         },
         ...
@@ -52,7 +52,7 @@ def create_file_index(repo_path, commit_index):
     file_index = {k: {} for k in commit_index.keys()}
     for rev, files in changed.items():
         bugno = rev_index[rev]
-        file_index[bugno][rev] = files
+        file_index[bugno][rev] = [f[1] for f in files]
         log.debug('Adding revision {} to bug #{}. Files: {}'.format(
             rev, bugno, files))
 
@@ -80,7 +80,7 @@ def create_components(repo_path):
     {
         component: {
             'files': [(path, filename), ...],
-            'includes': set(),
+            'includes': [],
             'vulncount': 0
         },
         ...
@@ -95,7 +95,7 @@ def create_components(repo_path):
                 if component not in components.keys():
                     components[component] = {
                         'files': [identifier],
-                        'includes': set(),
+                        'includes': [],
                         'vulncount': 0
                     }
                 else:
@@ -106,32 +106,60 @@ def create_components(repo_path):
 
 def get_includes_fs(components):
     """
-    Collects the include statements for each component from the file system.
-    Requires an existing component dict to extend. Returns an extended component
-    dict of structure:
-    {
-    component: {
-        'files': [(path, file), ...],
-        'includes': set([import, ...]),
-        'vulncount': 0
-        },
-        ...
-    }
+    Collects the include statements for each component from the file system and
+    adds the resulting set to the list of includes. Requires an existing
+    component dict to extend. Returns a copy of the provided component dict.
     """
-    pattern = re.compile(r'^#include (<|")(.*?)(>|").*$', re.MULTILINE)
     extended = components.copy()
     for component, metadata in components.items():
-        log.debug('Fetching includes for component {}'.format(component))
+        log.debug('Fetching includes for component {} from the file system'.format(component))
 
         includes = set()
         for identifier in metadata['files']:
             with open(os.path.join(identifier[0], identifier[1]), 'r') as f:
-                content = f.read()
-                includes.update([m[1] for m in pattern.findall(content)])
-        includes = set([os.path.split(include)[-1] for include in includes])
-        extended[component]['includes'] = includes
+                includes.update(_includes(f.read()))
+        extended[component]['includes'].append(includes)
 
     return extended
+
+
+def get_includes_rev(repo_path, components, file_index):
+    """
+    Collects the include statements for each component from vulnerability-
+    related revisions and adds the resulting set to the list of includes.
+    Requires an existing component dict to extend. Returns a copy of the
+    provided component dict.
+    """
+    log.info('Fetching includes from past revisions')
+    component_keys = components.keys()
+    component_revs = []
+    for revisions in file_index.values():
+        for rev, files in revisions.items():
+            for f in files:
+                component = component_name(os.path.split(f)[-1])
+                if component in component_keys:
+                    component_revs.append((component, rev))
+
+    extended = components.copy()
+    for component, rev in set(component_revs):
+        fetchrev = int(rev) - 1
+        log.debug('Fetching includes for component {} from revision {}'.format(component, fetchrev))
+        files = [os.path.join(f[0], f[1]) for f in components[component]['files']]
+        includes = set()
+        for content in hg.rev_file_contents(repo_path, files, fetchrev):
+            includes.update(_includes(content))
+        if includes not in extended[component]['includes']:
+            log.info('Found differing includes for component {} and revision {}'.format(component, fetchrev))
+            extended[component]['includes'].append(includes)
+
+    return extended
+
+
+def _includes(content):
+    pattern = re.compile(r'^#include (<|")(.*?)(>|").*$', re.MULTILINE)
+    includes = [i[1] for i in pattern.findall(content)]
+    includes = set([os.path.split(i)[-1] for i in includes])
+    return includes
 
 
 def label_components(file_index, components):
@@ -147,7 +175,7 @@ def label_components(file_index, components):
         # Store already encountered components per bug number (only count once):
         encountered = []
         for files in revisions.values():
-            for code, f in files:
+            for f in files:
                 cname = component_name(os.path.split(f)[-1])
                 if cname is not None and cname not in encountered:
                     encountered.append(cname)

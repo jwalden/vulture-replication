@@ -40,7 +40,9 @@ parser.add_argument('--build-file-index', action='store_true',
                     help='build the file index for the stored commit index and the given repository')
 parser.add_argument('--extract-components', action='store_true',
                     help='combine indices and the repository structure into information about components')
-parser.add_argument('--build-dataset', action='store_true',
+parser.add_argument('--add-rev-includes', action='store_true',
+                    help='add the includes from vulnerability revisions to the components')
+parser.add_argument('--build-dataset', action='store', choices=['current', 'history'],
                     help='build the numpy dataset (feature matrix) from the stored component information')
 parser.add_argument('-r', '--repo', metavar='path', type=str,
                     help='the path to the mozilla-central mercurial repository')
@@ -72,11 +74,12 @@ if args['scrape_advisories']:
 
 if args['build_complete']:
     print('building complete data set from scratch, without scraping of advisories')
-    print('this will take 30+ minutes!')
+    print('this will take 45+ minutes!')
     condor.extract_bugs()
     condor.build_commit_index()
     condor.build_file_index()
     condor.extract_components()
+    condor.add_revision_includes()
     condor.build_dataset()
 
 if args['extract_bugs']:
@@ -91,5 +94,9 @@ if args['build_file_index']:
 if args['extract_components']:
     condor.extract_components()
 
-if args['build_dataset']:
-    condor.build_dataset()
+if args['add_rev_includes']:
+    condor.add_revision_includes()
+
+if args['build_dataset'] is not None:
+    include_revs = args['build_dataset'] == 'history'
+    condor.build_dataset(include_revs)

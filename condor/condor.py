@@ -5,9 +5,10 @@ from itertools import chain
 from core.config import Config
 from core import serialize
 from core.timer import timeit
-from miner import mozilla_mfsa as mfsa
 from miner import combine
 from miner import dataset
+from miner import mozilla_hg
+import miner.mozilla_mfsa as mfsa
 
 
 class Condor:
@@ -64,8 +65,11 @@ class Condor:
                 len(components.keys()),
                 sum(len(x['files']) for x in components.values())
             ))
-            print('{} distinct includes'.format(
-                len(set(chain.from_iterable([c['includes'] for c in components.values()])))
+            print('{} distinct current includes'.format(
+                len(set(chain.from_iterable([c['includes'][0] for c in components.values()])))
+            ))
+            print('{} distinct includes with revisions'.format(
+                len(set(chain.from_iterable(chain.from_iterable([c['includes'] for c in components.values()]))))
             ))
             print('{} components flagged as vulnerable'.format(
                 sum(1 if x['vulncount'] > 0 else 0 for x in components.values()),
@@ -164,10 +168,33 @@ class Condor:
         print('done')
 
     @timeit
-    def build_dataset(self):
-        print('building dataset')
+    def add_revision_includes(self):
+        print('extracting and adding revision includes to the existing components')
+        print('this will take some time')
 
-        feature_matrix = dataset.from_components(serialize.read(self.config.components))
+        components = serialize.read(self.config.components)
+        file_index = serialize.read(self.config.file_index)
+        components = combine.get_includes_rev(self.repopath, components, file_index)
+        serialize.persist(components, self.config.components)
+
+        print('done')
+
+    @timeit
+    def build_dataset(self, include_revs=False):
+        print('building data set')
+
+        components = serialize.read(self.config.components)
+        if include_revs:
+            print('including history in data set')
+            if max(len(c['includes']) for c in components.values()) == 1:
+                print('ERROR: there does not seem to be a revision history in the components data structure')
+                print('run with --add-rev-history first if you want to build the history data set')
+                exit(1)
+            feature_matrix = dataset.from_history(components)
+        else:
+            print('from current revision only')
+            feature_matrix = dataset.from_current(components)
+
         sparse = dataset.to_sparse(feature_matrix)
         serialize.persist(sparse, self.config.dataset)
 
