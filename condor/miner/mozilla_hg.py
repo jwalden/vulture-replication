@@ -1,5 +1,8 @@
 import hglib
 import logging
+import os.path
+
+from itertools import chain
 
 
 log = logging.getLogger(__name__)
@@ -46,3 +49,16 @@ def files(repo_path, commits):
             changed[rev] = client.status(change=rev, modified=True)
 
     return changed
+
+
+def rev_file_contents(repo_path, files, revision):
+    """
+    Generator that yields the content of the specified files for the given
+    revision.
+    """
+    with hglib.open(repo_path) as client:
+        for f in files:
+            try:
+                yield client.cat(files=[f], rev=revision)
+            except hglib.error.CommandError:
+                continue
