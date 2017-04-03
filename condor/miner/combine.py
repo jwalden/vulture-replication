@@ -139,11 +139,14 @@ def get_includes_rev(repo_path, components, file_index):
                 component = component_name(os.path.split(f)[-1])
                 if component in component_keys:
                     component_revs.append((component, rev))
+    component_revs = set(component_revs)
 
+    i, i_max = 0, len(component_revs)
     extended = components.copy()
-    for component, rev in set(component_revs):
+    for component, rev in component_revs:
+        i += 1
         fetchrev = int(rev) - 1
-        log.debug('Fetching includes for component {} from revision {}'.format(component, fetchrev))
+        log.debug('{}/{} Fetching includes for component {} from revision {}'.format(i, i_max, component, fetchrev))
         files = [os.path.join(f[0], f[1]) for f in components[component]['files']]
         includes = set()
         for content in hg.rev_file_contents(repo_path, files, fetchrev):

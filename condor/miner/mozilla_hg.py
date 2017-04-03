@@ -62,3 +62,19 @@ def rev_file_contents(repo_path, files, revision):
                 yield client.cat(files=[f], rev=revision)
             except hglib.error.CommandError:
                 continue
+
+
+def checkout_rev(repo_path, revision):
+    log.info('Checking out revision {}'.format(revision))
+    with hglib.open(repo_path) as client:
+        client.update(rev=revision, clean=True)
+        #client.revert(files=repo_path, rev=revision)
+        log.debug(client.identify())
+
+
+def checkout_head(repo_path):
+    log.info('Checking out head revision')
+    with hglib.open(repo_path) as client:
+        client.update(clean=True)
+        #client.revert(files=repo_path)
+        log.debug(client.identify())

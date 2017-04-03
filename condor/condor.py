@@ -13,10 +13,9 @@ import miner.mozilla_mfsa as mfsa
 
 class Condor:
 
-    def __init__(self, repopath=None):
+    def __init__(self, repo_path=None):
         self.config = Config()
-        self.repopath = repopath
-
+        self.repo_path = repo_path
 
     def print_stats(self):
         print('-- VULNERABILITY BUG LIST --')
@@ -121,7 +120,7 @@ class Condor:
             print('ERROR: could not read the stored vulnerability bug numbers')
             exit(1)
         try:
-            commit_index = combine.create_commit_index(self.repopath, bug_numbers)
+            commit_index = combine.create_commit_index(self.repo_path, bug_numbers)
         except ServerError:
             print('ERROR: provided path is not a valid mercurial repository')
             exit(1)
@@ -138,14 +137,14 @@ class Condor:
             print('ERROR: missing the commit index')
             exit(1)
 
-        file_index = combine.create_file_index(self.repopath, commit_index)
+        file_index = combine.create_file_index(self.repo_path, commit_index)
         serialize.persist(file_index, self.config.file_index)
 
     @timeit
     def extract_components(self):
         print('extracting all c, cpp and h files from the repository')
 
-        index = combine.create_components(self.repopath)
+        index = combine.create_components(self.repo_path)
 
         print('done')
         no_files = [len(x['files']) for x in index.values()]
@@ -174,7 +173,7 @@ class Condor:
 
         components = serialize.read(self.config.components)
         file_index = serialize.read(self.config.file_index)
-        components = combine.get_includes_rev(self.repopath, components, file_index)
+        components = combine.get_includes_rev(self.repo_path, components, file_index)
         serialize.persist(components, self.config.components)
 
         print('done')
