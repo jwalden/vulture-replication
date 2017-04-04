@@ -5,9 +5,8 @@ from itertools import chain
 from core.config import Config
 from core import serialize
 from core.timer import timeit
-from miner import combine
+from miner.combine import Combiner
 from miner import dataset
-from miner import mozilla_hg
 import miner.mozilla_mfsa as mfsa
 
 
@@ -15,7 +14,7 @@ class Condor:
 
     def __init__(self, repo_path=None):
         self.config = Config()
-        self.repo_path = repo_path
+        self.combiner = Combiner(repo_path) if repo_path is not None else None
 
     def print_stats(self):
         print('-- VULNERABILITY BUG LIST --')
@@ -120,7 +119,7 @@ class Condor:
             print('ERROR: could not read the stored vulnerability bug numbers')
             exit(1)
         try:
-            commit_index = combine.create_commit_index(self.repo_path, bug_numbers)
+            commit_index = self.combiner.create_commit_index(bug_numbers)
         except ServerError:
             print('ERROR: provided path is not a valid mercurial repository')
             exit(1)
@@ -137,14 +136,14 @@ class Condor:
             print('ERROR: missing the commit index')
             exit(1)
 
-        file_index = combine.create_file_index(self.repo_path, commit_index)
+        file_index = self.combiner.create_file_index(commit_index)
         serialize.persist(file_index, self.config.file_index)
 
     @timeit
     def extract_components(self):
         print('extracting all c, cpp and h files from the repository')
 
-        index = combine.create_components(self.repo_path)
+        index = self.combiner.create_components()
 
         print('done')
         no_files = [len(x['files']) for x in index.values()]
@@ -158,10 +157,10 @@ class Condor:
                   ))
 
         print('extracting include statements for each component')
-        index = combine.get_includes_fs(index)
+        index = self.combiner.get_includes_fs(index)
 
         print('assigning vulnerability count to each component')
-        index = combine.label_components(serialize.read(self.config.file_index), index)
+        index = self.combiner.label_components(serialize.read(self.config.file_index), index)
         serialize.persist(index, self.config.components)
 
         print('done')
@@ -173,7 +172,7 @@ class Condor:
 
         components = serialize.read(self.config.components)
         file_index = serialize.read(self.config.file_index)
-        components = combine.get_includes_rev(self.repo_path, components, file_index)
+        components = self.combiner.get_includes_rev(components, file_index)
         serialize.persist(components, self.config.components)
 
         print('done')
