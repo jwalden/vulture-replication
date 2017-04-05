@@ -24,6 +24,8 @@ intermediate indices can then be combined into the final data set.
 ''')
 parser.add_argument('--stats', action='store_true',
                     help='show statistics for the existing data structures')
+parser.add_argument('-p', '--print', metavar='path', type=str,
+                    help='print a pickled data structure, e.g the commit index')
 parser.add_argument('-s', '--scrape-complete', action='store_true',
                     help='scrape and store both the MFSA overview page and the individual MFSA pages')
 parser.add_argument('--scrape-overview', action='store_true',
@@ -46,8 +48,6 @@ parser.add_argument('--build-dataset', action='store', choices=['current', 'hist
                     help='build the numpy dataset (feature matrix) from the stored component information')
 parser.add_argument('-r', '--repo', metavar='path', type=str,
                     help='the path to the mozilla-central mercurial repository')
-parser.add_argument('-p', '--print', metavar='path', type=str,
-                    help='print a pickled data structure, e.g the commit index')
 
 args = vars(parser.parse_args())
 
