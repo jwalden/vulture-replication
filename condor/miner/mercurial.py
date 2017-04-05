@@ -28,7 +28,6 @@ class CondorHg:
         for commit in log:
             yield (int(commit[0]), commit[1], commit[5])
 
-
     def history(self, revrange=None):
         """
         Returns a list of tuples of (commit number, node, commit message) for a
@@ -42,7 +41,6 @@ class CondorHg:
             history.append((int(commit[0]), commit[1], commit[5]))
 
         return history
-
 
     def mod_files(self, commits):
         """
@@ -58,7 +56,6 @@ class CondorHg:
 
         return changed
 
-
     def rev_file_contents(self, files, revision):
         """
         Generator that yields the content of the specified files for the given
@@ -70,7 +67,6 @@ class CondorHg:
             except hglib.error.CommandError:
                 continue
 
-
     def checkout_rev(self, revision):
         """
         Checks out the specified revision of the repository.
@@ -79,7 +75,6 @@ class CondorHg:
 
         self.client.update(rev=revision, clean=True)
         log.debug('Client state: {}'.format(self.client.identify()))
-
 
     def checkout_head(self):
         """
@@ -95,3 +90,10 @@ class CondorHg:
         Returns the currently checked out revision number.
         """
         return self.client.identify(num=True)
+
+    def rev_date(self, revision):
+        """
+        Returns the datetime of a revision.
+        """
+        revision = self.current_revision() if revision is None else revision
+        return self.client.log(revrange=revision)[0][6]

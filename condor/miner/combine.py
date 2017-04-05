@@ -13,9 +13,17 @@ log = logging.getLogger(__name__)
 
 class Combiner:
 
-    def __init__(self, repo_path):
+    def __init__(self, repo_path, revision=None):
         self.repo_path = repo_path
+        self.revision = revision
         self.hg = CondorHg(repo_path)
+
+        if self.revision is not None:
+            self.hg.checkout_rev(self.revision)
+
+    def __del__(self):
+        if self.revision is not None:
+            self.hg.checkout_head()
 
     def create_commit_index(self, bugs):
         """
@@ -37,7 +45,6 @@ class Combiner:
                         index[bugno].append(commit)
 
         return index
-
 
     def create_file_index(self, commit_index):
         """
@@ -64,7 +71,6 @@ class Combiner:
 
         return file_index
 
-
     def  _create_rev_index(self, commit_index):
         """
         Returns an index that maps each revision number in the given commit index
@@ -75,7 +81,6 @@ class Combiner:
             for commit in commits:
                 rev_index[commit[0]] = bugno
         return rev_index
-
 
     def create_components(self):
         """
@@ -92,6 +97,10 @@ class Combiner:
             ...
         }
         """
+
+        log.info('Creating components for revision {} ({})'.format(
+            self.revision, self.hg.rev_date(self.revision)))
+
         components = {}
         for path, dirs, files in os.walk(self.repo_path):
             for filename in files:
@@ -108,7 +117,6 @@ class Combiner:
                         components[component]['files'].append(identifier)
 
         return components
-
 
     def get_includes_fs(self, components):
         """
@@ -127,7 +135,6 @@ class Combiner:
             extended[component]['includes'][-1] = includes
 
         return extended
-
 
     def get_includes_rev(self, components):
         """
@@ -157,13 +164,11 @@ class Combiner:
 
         return extended
 
-
     def _includes(self, content):
         pattern = re.compile(r'^#include (<|")(.*?)(>|").*$', re.MULTILINE)
         includes = [i[1] for i in pattern.findall(content)]
         includes = set([os.path.split(i)[-1] for i in includes])
         return includes
-
 
     def label_components(self, file_index, components):
         """
@@ -176,13 +181,13 @@ class Combiner:
         labeled = components.copy()
         for revisions in file_index.values():
             for rev, files in revisions.items():
-                for f in files:
-                    component = self.component_name(os.path.split(f)[-1])
-                    if component in labeled.keys():
-                        labeled[component]['fixes'].add(rev)
+                if self.revision is None or self.revision >= rev:
+                    for f in files:
+                        component = self.component_name(os.path.split(f)[-1])
+                        if component in labeled.keys():
+                            labeled[component]['fixes'].add(rev)
 
         return labeled
-
 
     def component_name(self, filename):
         name, ext = os.path.splitext(filename)

@@ -14,9 +14,10 @@ import miner.mozilla_mfsa as mfsa
 
 class Condor:
 
-    def __init__(self, repo_path=None):
+    def __init__(self, repo_path=None, revision=None):
         self.config = Config()
-        self.combiner = Combiner(repo_path) if repo_path is not None else None
+        self.revision = revision
+        self.combiner = Combiner(repo_path, revision) if repo_path is not None else None
 
     def print_stats(self):
         print('-- VULNERABILITY BUG LIST --')
@@ -149,6 +150,11 @@ class Condor:
     @timeit
     def extract_components(self):
         print('extracting all c, cpp and h files from the repository')
+        if self.revision is None:
+            print('using most recent revision')
+        else:
+            print('extracting components for revision {} ({})'.format(
+                self.revision, self.combiner.hg.rev_date(self.revision)))
 
         index = self.combiner.create_components()
 

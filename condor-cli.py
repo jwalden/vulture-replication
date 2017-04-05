@@ -50,6 +50,8 @@ parser.add_argument('-r', '--repo', metavar='path', type=str,
                     help='the path to the mozilla-central mercurial repository')
 parser.add_argument('-o', '--out', metavar='path', type=str,
                     help='optional path to save the dataset to. if not specified, the path in the config file is used')
+parser.add_argument('--rev', metavar='revision', type=int,
+                    help='optional revision to use when building the components')
 
 args = vars(parser.parse_args())
 
@@ -61,7 +63,7 @@ if args['repo'] is None and (args['build_complete'] is True
     exit(1)
 
 
-condor = Condor(args['repo'])
+condor = Condor(args['repo'], args['rev'])
 
 if args['stats']:
     condor.print_stats()
