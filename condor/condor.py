@@ -184,7 +184,7 @@ class Condor:
         print('done')
 
     @timeit
-    def build_dataset(self, include_revs=False):
+    def build_dataset(self, out=None, include_revs=False):
         print('building data set')
 
         components = serialize.read(self.config.components)
@@ -200,7 +200,10 @@ class Condor:
             feature_matrix = dataset.from_current(components)
 
         sparse = dataset.to_sparse(feature_matrix)
-        serialize.persist(sparse, self.config.dataset)
+        save_path = out if out is not None else self.config.dataset
+        if not save_path.endswith('.pickle'):
+            save_path += '.pickle'
+        serialize.persist(sparse, save_path)
 
         print('done')
 

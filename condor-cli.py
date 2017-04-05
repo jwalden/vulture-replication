@@ -48,6 +48,8 @@ parser.add_argument('--build-dataset', action='store', choices=['current', 'hist
                     help='build the numpy dataset (feature matrix) from the stored component information')
 parser.add_argument('-r', '--repo', metavar='path', type=str,
                     help='the path to the mozilla-central mercurial repository')
+parser.add_argument('-o', '--out', metavar='path', type=str,
+                    help='optional path to save the dataset to. if not specified, the path in the config file is used')
 
 args = vars(parser.parse_args())
 
@@ -82,7 +84,7 @@ if args['build_complete']:
     condor.build_file_index()
     condor.extract_components()
     condor.add_revision_includes()
-    condor.build_dataset()
+    condor.build_dataset(args['out'])
 
 if args['extract_bugs']:
     condor.extract_bugs()
@@ -101,7 +103,7 @@ if args['add_rev_includes']:
 
 if args['build_dataset'] is not None:
     include_revs = args['build_dataset'] == 'history'
-    condor.build_dataset(include_revs)
+    condor.build_dataset(args['out'], include_revs)
 
 if args['print'] is not None:
     condor.print_structure(args['print'])
