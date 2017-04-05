@@ -26,7 +26,7 @@ class CondorHg:
         log = self.client.log(revrange=revrange)
 
         for commit in log:
-            yield (commit[0], commit[1], commit[5])
+            yield (int(commit[0]), commit[1], commit[5])
 
 
     def history(self, revrange=None):
@@ -39,7 +39,7 @@ class CondorHg:
 
         history = []
         for commit in log:
-            history.append((commit[0], commit[1], commit[5]))
+            history.append((int(commit[0]), commit[1], commit[5]))
 
         return history
 
@@ -89,3 +89,9 @@ class CondorHg:
 
         self.client.update(clean=True)
         log.debug('Client state: {}'.format(self.client.identify()))
+
+    def current_revision(self):
+        """
+        Returns the currently checked out revision number.
+        """
+        return self.client.identify(num=True)

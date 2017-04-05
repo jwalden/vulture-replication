@@ -46,6 +46,8 @@ parser.add_argument('--build-dataset', action='store', choices=['current', 'hist
                     help='build the numpy dataset (feature matrix) from the stored component information')
 parser.add_argument('-r', '--repo', metavar='path', type=str,
                     help='the path to the mozilla-central mercurial repository')
+parser.add_argument('-p', '--print', metavar='path', type=str,
+                    help='print a pickled data structure, e.g the commit index')
 
 args = vars(parser.parse_args())
 
@@ -74,7 +76,7 @@ if args['scrape_advisories']:
 
 if args['build_complete']:
     print('building complete data set from scratch, without scraping of advisories')
-    print('this will take 45+ minutes!')
+    print('this will take 30+ minutes!')
     condor.extract_bugs()
     condor.build_commit_index()
     condor.build_file_index()
@@ -100,3 +102,6 @@ if args['add_rev_includes']:
 if args['build_dataset'] is not None:
     include_revs = args['build_dataset'] == 'history'
     condor.build_dataset(include_revs)
+
+if args['print'] is not None:
+    condor.print_structure(args['print'])

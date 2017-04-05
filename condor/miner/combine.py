@@ -51,7 +51,7 @@ class Combiner:
             ...
         }
         """
-        rev_index = _create_rev_index(commit_index)
+        rev_index = self._create_rev_index(commit_index)
         commits = chain.from_iterable(commit_index.values())
         changed = self.hg.mod_files(commits)
 
@@ -95,14 +95,14 @@ class Combiner:
         components = {}
         for path, dirs, files in os.walk(self.repo_path):
             for filename in files:
-                component = component_name(filename)
+                component = self.component_name(filename)
                 if component is not None:
                     identifier = (path, filename)
                     if component not in components.keys():
                         components[component] = {
                             'files': [identifier],
-                            'includes': [],
-                            'vulncount': 0
+                            'includes': {},
+                            'fixes': set()
                         }
                     else:
                         components[component]['files'].append(identifier)
@@ -123,13 +123,13 @@ class Combiner:
             includes = set()
             for identifier in metadata['files']:
                 with open(os.path.join(identifier[0], identifier[1]), 'r') as f:
-                    includes.update(_includes(f.read()))
-            extended[component]['includes'].append(includes)
+                    includes.update(self._includes(f.read()))
+            extended[component]['includes'][-1] = includes
 
         return extended
 
 
-    def get_includes_rev(self, components, file_index):
+    def get_includes_rev(self, components):
         """
         Collects the include statements for each component from vulnerability-
         related revisions and adds the resulting set to the list of includes.
@@ -137,29 +137,23 @@ class Combiner:
         provided component dict.
         """
         log.info('Fetching includes from past revisions')
-        component_keys = components.keys()
-        component_revs = []
-        for revisions in file_index.values():
-            for rev, files in revisions.items():
-                for f in files:
-                    component = component_name(os.path.split(f)[-1])
-                    if component in component_keys:
-                        component_revs.append((component, rev))
-        component_revs = set(component_revs)
+        if len(max(components.values(), key=lambda x: len(x['fixes']))['fixes']) == 0:
+            log.error('Components must be labeled before fetching the revision includes')
+            raise ValueError('Components must be labeled before fetching the revision includes')
 
-        i, i_max = 0, len(component_revs)
         extended = components.copy()
-        for component, rev in component_revs:
-            i += 1
-            fetchrev = int(rev) - 1
-            log.debug('{}/{} Fetching includes for component {} from revision {}'.format(i, i_max, component, fetchrev))
-            files = [os.path.join(f[0], f[1]) for f in components[component]['files']]
-            includes = set()
-            for content in self.hg.rev_file_contents(files, fetchrev):
-                includes.update(_includes(content))
-            if includes not in extended[component]['includes']:
-                log.info('Found differing includes for component {} and revision {}'.format(component, fetchrev))
-                extended[component]['includes'].append(includes)
+        for component, data in extended.items():
+            files = [os.path.join(f[0], f[1]) for f in data['files']]
+            for rev in data['fixes']:
+                fetchrev = int(rev) - 1
+                log.debug('Fetching includes for component {} from revision {}'.format(component, fetchrev))
+
+                includes = set()
+                for content in self.hg.rev_file_contents(files, fetchrev):
+                    includes.update(self._includes(content))
+                if includes not in extended[component]['includes'].values():
+                    log.info('Found differing includes for component {} and revision {}'.format(component, fetchrev))
+                    extended[component]['includes'][rev] = includes
 
         return extended
 
@@ -173,36 +167,25 @@ class Combiner:
 
     def label_components(self, file_index, components):
         """
-        Combines the file index with the component data structure and flags
-        componets as vulnerable. Returns a new component data structure with
-        updated vulnerability counts.
+        Combines the file index with the component data structure and adds the
+        vulnerability fixing revision numbers to the set. Returns a new
+        component data structure with sets of fixing revision numbers.
         """
-        nokey = []
-        total = 0
+        log.info('Adding fix revision numbers to components')
+
         labeled = components.copy()
         for revisions in file_index.values():
-            # Store already encountered components per bug number (only count once):
-            encountered = []
-            for files in revisions.values():
+            for rev, files in revisions.items():
                 for f in files:
-                    cname = component_name(os.path.split(f)[-1])
-                    if cname is not None and cname not in encountered:
-                        encountered.append(cname)
-                        try:
-                            labeled[cname]['vulncount'] += 1
-                            total += 1
-                        except KeyError:
-                            nokey.append(cname)
-                            log.exception('Component not in component index: {}'.format(
-                                cname
-                            ))
-        log.debug('{} component vulnerabilities in total, {} could not be assigned (deleted?): {}'.format(total, len(nokey), nokey))
+                    component = self.component_name(os.path.split(f)[-1])
+                    if component in labeled.keys():
+                        labeled[component]['fixes'].add(rev)
 
         return labeled
 
 
-def component_name(self, filename):
-    name, ext = os.path.splitext(filename)
-    if ext.lower() in ['.c', '.cpp', '.h']:
-        return name
-    return None
+    def component_name(self, filename):
+        name, ext = os.path.splitext(filename)
+        if ext.lower() in ['.c', '.cpp', '.h']:
+            return name
+        return None

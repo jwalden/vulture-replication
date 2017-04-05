@@ -16,16 +16,16 @@ def from_current(components):
     feature matrix represents the target, i.e. the vulnerability vector.
     """
     log.info('Building data set from current includes')
-    columns = list(set(chain.from_iterable([c['includes'][0] for c in components.values()])))
+    columns = list(set(chain.from_iterable([c['includes'][-1] for c in components.values()])))
     rows = components.keys()
     matrix = np.zeros((len(rows), len(columns) + 1), dtype=np.uint8)
     j_max = len(columns)
 
     for i, component in enumerate(rows):
         for j, include in enumerate(columns):
-            if include in components[component]['includes'][0]:
+            if include in components[component]['includes'][-1]:
                 matrix[i, j] = 1
-        matrix[i, j_max] = components[component]['vulncount']
+        matrix[i, j_max] = len(components[component]['fixes'])
 
     return (matrix, rows, columns)
 
@@ -40,19 +40,39 @@ def from_history(components):
     matrix represents the target, i.e. the vulnerability vector.
     """
     log.info('Building data set from history')
-    columns = list(set(chain.from_iterable(chain.from_iterable([c['includes'] for c in components.values()]))))
-    rows = [c[0] for c in components.items() for i in c[1]['includes']]
+    columns = list(set(chain.from_iterable(chain.from_iterable([c['includes'].values() for c in components.values()]))))
+    rows = [c[0] for c in components.items() for i in c[1]['includes'].keys()]
     matrix = np.zeros((len(rows), len(columns) + 1), dtype=np.uint8)
     j_max = len(columns)
 
+    # Fetch the indices of the 1-columns and vulncount for each component
+    incl_indices = {c: [] for c in components.keys()}
+    for component, data in components.items():
+        current_indices = []
+        for include in data['includes'][-1]:
+            current_indices.append(columns.index(include))
+        incl_indices[component].append((len(data['fixes']), current_indices))
+
+        fixes = sorted(list(data['fixes']))
+        vulncount = 0
+        for fix in fixes:
+            if fix in data['includes'].keys():
+                fix_indices = []
+                for include in data['includes'][fix]:
+                    fix_indices.append(columns.index(include))
+                incl_indices[component].append((vulncount, fix_indices))
+
+            vulncount += 1
+
+    # Assign the 1 values and vulncount to the previously fetched indices
     for i, component in enumerate(rows):
-        for j, include in enumerate(columns):
-            for includes in components[component]['includes']:
-                if include in includes:
-                    matrix[i, j] = 1
-                matrix[i, j_max] = components[component]['vulncount']
+        vulncount, indices = incl_indices[component].pop()
+        for j in indices:
+            matrix[i, j] = 1
+        matrix[i, j_max] = vulncount
 
     return (matrix, rows, columns)
+
 
 
 def to_sparse(dataset):

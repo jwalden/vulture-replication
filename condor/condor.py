@@ -1,4 +1,5 @@
 import os.path
+from pprint import pprint
 from hglib.error import ServerError
 from itertools import chain
 
@@ -64,16 +65,16 @@ class Condor:
                 sum(len(x['files']) for x in components.values())
             ))
             print('{} distinct current includes'.format(
-                len(set(chain.from_iterable([c['includes'][0] for c in components.values()])))
+                len(set(chain.from_iterable([c['includes'][-1] for c in components.values()])))
             ))
             print('{} distinct includes with revisions'.format(
-                len(set(chain.from_iterable(chain.from_iterable([c['includes'] for c in components.values()]))))
+                len(set(chain.from_iterable(chain.from_iterable([c['includes'].values() for c in components.values()]))))
             ))
             print('{} components flagged as vulnerable'.format(
-                sum(1 if x['vulncount'] > 0 else 0 for x in components.values()),
+                sum(1 if len(x['fixes']) > 0 else 0 for x in components.values()),
             ))
             print('{} vulnerability counts in total'.format(
-                sum(x['vulncount'] for x in components.values())
+                sum(len(x['fixes']) for x in components.values())
             ))
         else:
             print('the components have not yet been extracted')
@@ -159,7 +160,7 @@ class Condor:
         print('extracting include statements for each component')
         index = self.combiner.get_includes_fs(index)
 
-        print('assigning vulnerability count to each component')
+        print('assigning vulnerability fix revisions to each component')
         index = self.combiner.label_components(serialize.read(self.config.file_index), index)
         serialize.persist(index, self.config.components)
 
@@ -171,8 +172,7 @@ class Condor:
         print('this will take some time')
 
         components = serialize.read(self.config.components)
-        file_index = serialize.read(self.config.file_index)
-        components = self.combiner.get_includes_rev(components, file_index)
+        components = self.combiner.get_includes_rev(components)
         serialize.persist(components, self.config.components)
 
         print('done')
@@ -197,3 +197,6 @@ class Condor:
         serialize.persist(sparse, self.config.dataset)
 
         print('done')
+
+    def print_structure(self, path):
+        pprint(serialize.read(path), width=140)
