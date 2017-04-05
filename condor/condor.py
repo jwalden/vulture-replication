@@ -1,4 +1,5 @@
 import os.path
+import numpy as np
 from pprint import pprint
 from hglib.error import ServerError
 from itertools import chain
@@ -84,6 +85,11 @@ class Condor:
         if os.path.exists(self.config.dataset):
             matrix = dataset.from_sparse(serialize.read(self.config.dataset))[0]
             print('the shape of the feature matrix is {}'.format(matrix.shape))
+            nonzero = np.count_nonzero(matrix[:,-1])
+            print('{} rows with vulnerabilities ({} %)'.format(
+                nonzero,
+                100 * (float(nonzero) / matrix.shape[0])
+            ))
         else:
             print('the feature matrix has not yet been built')
 
