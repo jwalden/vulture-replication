@@ -13,10 +13,9 @@ log = logging.getLogger(__name__)
 
 class Combiner:
 
-    def __init__(self, repo_path, revision=None):
-        self.repo_path = repo_path
+    def __init__(self, condor_hg, revision=None):
         self.revision = revision
-        self.hg = CondorHg(repo_path)
+        self.hg = condor_hg
 
         if self.revision is not None:
             self.hg.checkout_rev(self.revision)
@@ -91,8 +90,8 @@ class Combiner:
         {
             component: {
                 'files': [(path, filename), ...],
-                'includes': [],
-                'vulncount': 0
+                'includes': {},
+                'fixes': set()
             },
             ...
         }
@@ -102,9 +101,9 @@ class Combiner:
             self.revision, self.hg.rev_date(self.revision)))
 
         components = {}
-        for path, dirs, files in os.walk(self.repo_path):
+        for path, dirs, files in os.walk(self.hg.repo_path):
             for filename in files:
-                component = self.component_name(filename)
+                component = self.get_component_name(filename)
                 if component is not None:
                     identifier = (path, filename)
                     if component not in components.keys():
@@ -136,7 +135,7 @@ class Combiner:
 
         return extended
 
-    def get_includes_rev(self, components):
+    def get_includes_rev(self, components, keep_duplicates=False):
         """
         Collects the include statements for each component from vulnerability-
         related revisions and adds the resulting set to the list of includes.
@@ -158,8 +157,8 @@ class Combiner:
                 includes = set()
                 for content in self.hg.rev_file_contents(files, fetchrev):
                     includes.update(self._includes(content))
-                if includes not in extended[component]['includes'].values():
-                    log.info('Found differing includes for component {} and revision {}'.format(component, fetchrev))
+                if keep_duplicates or (includes not in extended[component]['includes'].values()):
+                    log.info('Adding new includes for component {} and revision {}'.format(component, fetchrev))
                     extended[component]['includes'][rev] = includes
 
         return extended
@@ -183,14 +182,46 @@ class Combiner:
             for rev, files in revisions.items():
                 if self.revision is None or self.revision >= rev:
                     for f in files:
-                        component = self.component_name(os.path.split(f)[-1])
+                        component = self.get_component_name(f)
                         if component in labeled.keys():
                             labeled[component]['fixes'].add(rev)
 
         return labeled
 
-    def component_name(self, filename):
-        name, ext = os.path.splitext(filename)
+    def get_diff(self, file_index, rev1, rev2):
+        """
+        Returns the set of fixed components between two revisions.
+        """
+        if rev1 > rev2:
+            tmp = rev1
+            rev1 = rev2
+            rev2 = tmp
+
+        rev_files = self._create_rev_files(file_index)
+        mod_files = []
+        for rev, files in rev_files.items():
+            if rev >= rev1 and rev <= rev2:
+                mod_files.extend(files)
+
+        mod_files = set([self.get_component_name(f) for f in mod_files])
+        if None in mod_files:
+            mod_files.remove(None)
+
+        return mod_files
+
+    def _create_rev_files(self, file_index):
+        rev_files = {}
+        for rev_dict in file_index.values():
+            for rev, files in rev_dict.items():
+                if rev in rev_files.keys():
+                    rev_files[rev].extend(files)
+                else:
+                    rev_files[rev] = files
+
+        return rev_files
+
+    def get_component_name(self, filename):
+        name, ext = os.path.splitext(os.path.split(filename)[-1])
         if ext.lower() in ['.c', '.cpp', '.h']:
             return name
         return None

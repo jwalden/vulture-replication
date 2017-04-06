@@ -52,6 +52,8 @@ parser.add_argument('-o', '--out', metavar='path', type=str,
                     help='optional path to save the dataset to. if not specified, the path in the config file is used')
 parser.add_argument('--rev', metavar='revision', type=int,
                     help='optional revision to use when building the components')
+parser.add_argument('--diff', metavar='rev', nargs=2, type=int,
+                    help='show the components that had to be fixed for vulnerabilities between two revisions')
 
 args = vars(parser.parse_args())
 
@@ -109,3 +111,7 @@ if args['build_dataset'] is not None:
 
 if args['print'] is not None:
     condor.print_structure(args['print'])
+
+if args['diff'] is not None:
+    revs = args['diff']
+    condor.diff(revs[0], revs[1])

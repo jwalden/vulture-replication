@@ -17,7 +17,8 @@ class Condor:
     def __init__(self, repo_path=None, revision=None):
         self.config = Config()
         self.revision = revision
-        self.combiner = Combiner(repo_path, revision) if repo_path is not None else None
+        self.hg = None if repo_path is None else CondorHg(repo_path)
+        self.combiner = Combiner(self.hg, revision)
 
     def print_stats(self):
         print('-- VULNERABILITY BUG LIST --')
@@ -215,3 +216,8 @@ class Condor:
 
     def print_structure(self, path):
         pprint(serialize.read(path), width=140)
+
+    def diff(self, rev1, rev2):
+        file_index = serialize.read(self.config.file_index)
+        for component in sorted(list(self.combiner.get_diff(file_index, rev1, rev2))):
+            print(component)
