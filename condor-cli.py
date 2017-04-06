@@ -24,6 +24,8 @@ intermediate indices can then be combined into the final data set.
 ''')
 parser.add_argument('--stats', action='store_true',
                     help='show statistics for the existing data structures')
+parser.add_argument('-p', '--print', metavar='path', type=str,
+                    help='print a pickled data structure, e.g the commit index')
 parser.add_argument('-s', '--scrape-complete', action='store_true',
                     help='scrape and store both the MFSA overview page and the individual MFSA pages')
 parser.add_argument('--scrape-overview', action='store_true',
@@ -46,6 +48,12 @@ parser.add_argument('--build-dataset', action='store', choices=['current', 'hist
                     help='build the numpy dataset (feature matrix) from the stored component information')
 parser.add_argument('-r', '--repo', metavar='path', type=str,
                     help='the path to the mozilla-central mercurial repository')
+parser.add_argument('-o', '--out', metavar='path', type=str,
+                    help='optional path to save the dataset to. if not specified, the path in the config file is used')
+parser.add_argument('--rev', metavar='revision', type=int,
+                    help='optional revision to use when building the components')
+parser.add_argument('--diff', metavar='rev', nargs=2, type=int,
+                    help='show the components that had to be fixed for vulnerabilities between two revisions')
 
 args = vars(parser.parse_args())
 
@@ -57,7 +65,7 @@ if args['repo'] is None and (args['build_complete'] is True
     exit(1)
 
 
-condor = Condor(args['repo'])
+condor = Condor(args['repo'], args['rev'])
 
 if args['stats']:
     condor.print_stats()
@@ -74,13 +82,13 @@ if args['scrape_advisories']:
 
 if args['build_complete']:
     print('building complete data set from scratch, without scraping of advisories')
-    print('this will take 45+ minutes!')
+    print('this will take 30+ minutes!')
     condor.extract_bugs()
     condor.build_commit_index()
     condor.build_file_index()
     condor.extract_components()
     condor.add_revision_includes()
-    condor.build_dataset()
+    condor.build_dataset(args['out'])
 
 if args['extract_bugs']:
     condor.extract_bugs()
@@ -99,4 +107,11 @@ if args['add_rev_includes']:
 
 if args['build_dataset'] is not None:
     include_revs = args['build_dataset'] == 'history'
-    condor.build_dataset(include_revs)
+    condor.build_dataset(args['out'], include_revs)
+
+if args['print'] is not None:
+    condor.print_structure(args['print'])
+
+if args['diff'] is not None:
+    revs = args['diff']
+    condor.diff(revs[0], revs[1])

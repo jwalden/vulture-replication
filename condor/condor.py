@@ -1,22 +1,24 @@
 import os.path
+import numpy as np
+from pprint import pprint
 from hglib.error import ServerError
 from itertools import chain
 
 from core.config import Config
 from core import serialize
 from core.timer import timeit
-from miner import combine
+from miner.combine import Combiner
 from miner import dataset
-from miner import mozilla_hg
 import miner.mozilla_mfsa as mfsa
 
 
 class Condor:
 
-    def __init__(self, repopath=None):
+    def __init__(self, repo_path=None, revision=None):
         self.config = Config()
-        self.repopath = repopath
-
+        self.revision = revision
+        self.hg = None if repo_path is None else CondorHg(repo_path)
+        self.combiner = Combiner(self.hg, revision)
 
     def print_stats(self):
         print('-- VULNERABILITY BUG LIST --')
@@ -66,16 +68,16 @@ class Condor:
                 sum(len(x['files']) for x in components.values())
             ))
             print('{} distinct current includes'.format(
-                len(set(chain.from_iterable([c['includes'][0] for c in components.values()])))
+                len(set(chain.from_iterable([c['includes'][-1] for c in components.values()])))
             ))
             print('{} distinct includes with revisions'.format(
-                len(set(chain.from_iterable(chain.from_iterable([c['includes'] for c in components.values()]))))
+                len(set(chain.from_iterable(chain.from_iterable([c['includes'].values() for c in components.values()]))))
             ))
             print('{} components flagged as vulnerable'.format(
-                sum(1 if x['vulncount'] > 0 else 0 for x in components.values()),
+                sum(1 if len(x['fixes']) > 0 else 0 for x in components.values()),
             ))
             print('{} vulnerability counts in total'.format(
-                sum(x['vulncount'] for x in components.values())
+                sum(len(x['fixes']) for x in components.values())
             ))
         else:
             print('the components have not yet been extracted')
@@ -85,6 +87,11 @@ class Condor:
         if os.path.exists(self.config.dataset):
             matrix = dataset.from_sparse(serialize.read(self.config.dataset))[0]
             print('the shape of the feature matrix is {}'.format(matrix.shape))
+            nonzero = np.count_nonzero(matrix[:,-1])
+            print('{} rows with vulnerabilities ({} %)'.format(
+                nonzero,
+                100 * (float(nonzero) / matrix.shape[0])
+            ))
         else:
             print('the feature matrix has not yet been built')
 
@@ -121,7 +128,7 @@ class Condor:
             print('ERROR: could not read the stored vulnerability bug numbers')
             exit(1)
         try:
-            commit_index = combine.create_commit_index(self.repopath, bug_numbers)
+            commit_index = self.combiner.create_commit_index(bug_numbers)
         except ServerError:
             print('ERROR: provided path is not a valid mercurial repository')
             exit(1)
@@ -138,14 +145,19 @@ class Condor:
             print('ERROR: missing the commit index')
             exit(1)
 
-        file_index = combine.create_file_index(self.repopath, commit_index)
+        file_index = self.combiner.create_file_index(commit_index)
         serialize.persist(file_index, self.config.file_index)
 
     @timeit
     def extract_components(self):
         print('extracting all c, cpp and h files from the repository')
+        if self.revision is None:
+            print('using most recent revision')
+        else:
+            print('extracting components for revision {} ({})'.format(
+                self.revision, self.combiner.hg.rev_date(self.revision)))
 
-        index = combine.create_components(self.repopath)
+        index = self.combiner.create_components()
 
         print('done')
         no_files = [len(x['files']) for x in index.values()]
@@ -159,10 +171,10 @@ class Condor:
                   ))
 
         print('extracting include statements for each component')
-        index = combine.get_includes_fs(index)
+        index = self.combiner.get_includes_fs(index)
 
-        print('assigning vulnerability count to each component')
-        index = combine.label_components(serialize.read(self.config.file_index), index)
+        print('assigning vulnerability fix revisions to each component')
+        index = self.combiner.label_components(serialize.read(self.config.file_index), index)
         serialize.persist(index, self.config.components)
 
         print('done')
@@ -173,14 +185,13 @@ class Condor:
         print('this will take some time')
 
         components = serialize.read(self.config.components)
-        file_index = serialize.read(self.config.file_index)
-        components = combine.get_includes_rev(self.repopath, components, file_index)
+        components = self.combiner.get_includes_rev(components)
         serialize.persist(components, self.config.components)
 
         print('done')
 
     @timeit
-    def build_dataset(self, include_revs=False):
+    def build_dataset(self, out=None, include_revs=False):
         print('building data set')
 
         components = serialize.read(self.config.components)
@@ -196,6 +207,17 @@ class Condor:
             feature_matrix = dataset.from_current(components)
 
         sparse = dataset.to_sparse(feature_matrix)
-        serialize.persist(sparse, self.config.dataset)
+        save_path = out if out is not None else self.config.dataset
+        if not save_path.endswith('.pickle'):
+            save_path += '.pickle'
+        serialize.persist(sparse, save_path)
 
         print('done')
+
+    def print_structure(self, path):
+        pprint(serialize.read(path), width=140)
+
+    def diff(self, rev1, rev2):
+        file_index = serialize.read(self.config.file_index)
+        for component in sorted(list(self.combiner.get_diff(file_index, rev1, rev2))):
+            print(component)
