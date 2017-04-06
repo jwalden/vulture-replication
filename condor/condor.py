@@ -9,6 +9,7 @@ from core import serialize
 from core.timer import timeit
 from miner.combine import Combiner
 from miner import dataset
+from miner.mercurial import CondorHg
 import miner.mozilla_mfsa as mfsa
 
 
