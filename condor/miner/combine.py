@@ -4,9 +4,6 @@ import os
 
 from itertools import chain
 
-import condor.miner.mozilla_hg as hg
-from condor.miner.mercurial import CondorHg
-
 
 log = logging.getLogger(__name__)
 
@@ -103,7 +100,7 @@ class Combiner:
         components = {}
         for path, dirs, files in os.walk(self.hg.repo_path):
             for filename in files:
-                component = self.get_component_name(filename)
+                component = get_component_name(filename)
                 if component is not None:
                     identifier = (path, filename)
                     if component not in components.keys():
@@ -158,8 +155,11 @@ class Combiner:
                 for content in self.hg.rev_file_contents(files, fetchrev):
                     includes.update(self._includes(content))
                 if keep_duplicates or (includes not in extended[component]['includes'].values()):
-                    log.info('Adding new includes for component {} and revision {}'.format(component, fetchrev))
-                    extended[component]['includes'][rev] = includes
+                    if len(includes) > 0:
+                        log.info('Adding new includes for component {} and revision {}'.format(component, fetchrev))
+                        extended[component]['includes'][rev] = includes
+                    else:
+                        log.error('Got empty include set for {} and revision {}'.format(component, fetchrev))
 
         return extended
 
@@ -182,7 +182,7 @@ class Combiner:
             for rev, files in revisions.items():
                 if self.revision is None or self.revision >= rev:
                     for f in files:
-                        component = self.get_component_name(f)
+                        component = get_component_name(f)
                         if component in labeled.keys():
                             labeled[component]['fixes'].add(rev)
 
@@ -203,7 +203,7 @@ class Combiner:
             if rev >= rev1 and rev <= rev2:
                 mod_files.extend(files)
 
-        mod_files = set([self.get_component_name(f) for f in mod_files])
+        mod_files = set([get_component_name(f) for f in mod_files])
         if None in mod_files:
             mod_files.remove(None)
 
@@ -220,8 +220,9 @@ class Combiner:
 
         return rev_files
 
-    def get_component_name(self, filename):
-        name, ext = os.path.splitext(os.path.split(filename)[-1])
-        if ext.lower() in ['.c', '.cpp', '.h']:
-            return name
-        return None
+
+def get_component_name(filename):
+    name, ext = os.path.splitext(os.path.split(filename)[-1])
+    if ext.lower() in ['.c', '.cpp', '.h']:
+        return name
+    return None
