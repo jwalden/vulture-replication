@@ -20,7 +20,7 @@ class Condor:
         self.hg = None if repo_path is None else CondorHg(repo_path)
         self.combiner = Combiner(self.hg)
 
-    def print_stats(self):
+    def print_stats(self, components_path):
         print('-- VULNERABILITY BUG LIST --')
         if os.path.exists(self.config.bugs):
             bugs = serialize.read(self.config.bugs)
@@ -61,26 +61,23 @@ class Condor:
         print('')
 
         print('-- COMPONENTS --')
-        if os.path.exists(self.config.components):
-            components = serialize.read(self.config.components)
-            print('{} components with {} files'.format(
-                len(components.keys()),
-                sum(len(x['files']) for x in components.values())
-            ))
-            print('{} distinct current includes'.format(
-                len(set(chain.from_iterable([c['includes'][-1] for c in components.values()])))
-            ))
-            print('{} distinct includes with revisions'.format(
-                len(set(chain.from_iterable(chain.from_iterable([c['includes'].values() for c in components.values()]))))
-            ))
-            print('{} components flagged as vulnerable'.format(
-                sum(1 if len(x['fixes']) > 0 else 0 for x in components.values()),
-            ))
-            print('{} vulnerability counts in total'.format(
-                sum(len(x['fixes']) for x in components.values())
-            ))
-        else:
-            print('the components have not yet been extracted')
+        components = self._read(components_path)
+        print('{} components with {} files'.format(
+            len(components.keys()),
+            sum(len(x['files']) for x in components.values())
+        ))
+        print('{} distinct current includes'.format(
+            len(set(chain.from_iterable([c['includes'][-1][1] for c in components.values()])))
+        ))
+        print('{} distinct includes with revisions'.format(
+            len(set(chain.from_iterable([incl[1] for incl in chain.from_iterable([c['includes'].values() for c in components.values()])])))
+        ))
+        print('{} components flagged as vulnerable'.format(
+            sum(1 if len(x['fixes']) > 0 else 0 for x in components.values()),
+        ))
+        print('{} vulnerability counts in total'.format(
+            sum(len(x['fixes']) for x in components.values())
+        ))
         print('')
 
         print('-- DATA SET --')

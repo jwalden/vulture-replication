@@ -121,11 +121,11 @@ class Combiner:
             for identifier in metadata['files']:
                 with open(os.path.join(identifier[0], identifier[1]), 'r') as f:
                     includes.update(self._includes(f.read()))
-            extended[component]['includes'][-1] = includes
+            extended[component]['includes'][-1] = ('o', includes)
 
         return extended
 
-    def get_includes_rev(self, components, keep_duplicates=False):
+    def get_includes_rev(self, components):
         """
         Collects the include statements for each component from vulnerability-
         related revisions and adds the resulting set to the list of includes.
@@ -147,12 +147,16 @@ class Combiner:
                 includes = set()
                 for content in self.hg.rev_file_contents(files, fetchrev):
                     includes.update(self._includes(content))
-                if keep_duplicates or (includes not in extended[component]['includes'].values()):
-                    if len(includes) > 0:
-                        log.info('Adding new includes for component {} and revision {}'.format(component, fetchrev))
-                        extended[component]['includes'][rev] = includes
-                    else:
-                        log.error('Got empty include set for {} and revision {}'.format(component, fetchrev))
+
+                if len(includes) > 0:
+                    flag = 'o'
+                    if includes in [incl[1] for incl in extended[component]['includes'].values()]:
+                        flag = 'd'
+                    log.info('Adding ({}) includes for component {} and revision {}'.format(
+                        flag, component, fetchrev))
+                    extended[component]['includes'][rev] = (flag, includes)
+                else:
+                    log.error('Got empty include set for {} and revision {}'.format(component, fetchrev))
 
         return extended
 
