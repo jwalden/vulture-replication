@@ -1,7 +1,7 @@
 import os.path
 import numpy as np
 from pprint import pprint
-from hglib.error import ServerError
+from hglib.error import ServerError, CommandError
 from itertools import chain
 
 from core.config import Config
@@ -15,11 +15,10 @@ import miner.mozilla_mfsa as mfsa
 
 class Condor:
 
-    def __init__(self, repo_path=None, revision=None):
+    def __init__(self, repo_path=None):
         self.config = Config()
-        self.revision = revision
         self.hg = None if repo_path is None else CondorHg(repo_path)
-        self.combiner = Combiner(self.hg, revision)
+        self.combiner = Combiner(self.hg)
 
     def print_stats(self):
         print('-- VULNERABILITY BUG LIST --')
@@ -150,13 +149,21 @@ class Condor:
         serialize.persist(file_index, self.config.file_index)
 
     @timeit
-    def extract_components(self):
+    def extract_components(self, path, revision=None):
+        print('building components and storing at {}'.format(path))
         print('extracting all c, cpp and h files from the repository')
-        if self.revision is None:
+        if revision is None:
             print('using most recent revision')
         else:
-            print('extracting components for revision {} ({})'.format(
-                self.revision, self.combiner.hg.rev_date(self.revision)))
+            try:
+                self.combiner.revision = revision
+                print('extracting components for revision {} ({})'.format(
+                    revision, self.combiner.hg.rev_date(revision)))
+                print('checking out revision {}'.format(revision))
+                self.hg.checkout_rev(revision)
+            except CommandError:
+                print('ERROR: invalid revision {}'.format(revision))
+                exit(1)
 
         index = self.combiner.create_components()
 
@@ -176,49 +183,66 @@ class Condor:
 
         print('assigning vulnerability fix revisions to each component')
         index = self.combiner.label_components(serialize.read(self.config.file_index), index)
-        serialize.persist(index, self.config.components)
+        serialize.persist(index, path)
 
+        if revision is not None:
+            print('reverting to head revision')
+            self.hg.checkout_head()
         print('done')
 
     @timeit
-    def add_revision_includes(self):
-        print('extracting and adding revision includes to the existing components')
+    def add_revision_includes(self, path):
+        print('extracting and adding revision includes to the existing components'
+              ' at {}'.format(path))
         print('this will take some time')
 
-        components = serialize.read(self.config.components)
+        components = self._read(path)
         components = self.combiner.get_includes_rev(components)
-        serialize.persist(components, self.config.components)
+        serialize.persist(components, path)
 
         print('done')
 
     @timeit
-    def build_dataset(self, out=None, include_revs=False):
-        print('building data set')
+    def build_dataset(self, path, target_type, period):
+        print('building data set for components at {}'.format(path))
 
-        components = serialize.read(self.config.components)
-        if include_revs:
+        is_regression = target_type == 'r'
+        if is_regression:
+            print('feature matrix type is regression')
+        else:
+            print('feature matrix type is classification')
+
+        components = self._read(path)
+
+        if period == 'history':
             print('including history in data set')
             if max(len(c['includes']) for c in components.values()) == 1:
                 print('ERROR: there does not seem to be a revision history in the components data structure')
                 print('run with --add-rev-history first if you want to build the history data set')
                 exit(1)
-            feature_matrix = dataset.from_history(components)
+            feature_matrix = dataset.from_history(components, is_regression)
         else:
             print('from current revision only')
-            feature_matrix = dataset.from_current(components)
+            feature_matrix = dataset.from_current(components, is_regression)
 
         sparse = dataset.to_sparse(feature_matrix)
-        save_path = out if out is not None else self.config.dataset
-        if not save_path.endswith('.pickle'):
-            save_path += '.pickle'
-        serialize.persist(sparse, save_path)
+        serialize.persist(sparse, self.config.dataset)
 
         print('done')
 
     def print_structure(self, path):
-        pprint(serialize.read(path), width=140)
+        pprint(self._read(path), width=140)
 
     def diff(self, rev1, rev2):
-        file_index = serialize.read(self.config.file_index)
+        file_index = self._read(self.config.file_index)
         for component in sorted(list(self.combiner.get_diff(file_index, rev1, rev2))):
             print(component)
+
+    def _read(self, path):
+        try:
+            data = serialize.read(path)
+        except IOError:
+            print('ERROR: File does not exist or is invalid: {}'.format(path))
+            exit(1)
+
+        return data

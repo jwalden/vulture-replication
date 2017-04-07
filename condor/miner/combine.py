@@ -14,13 +14,6 @@ class Combiner:
         self.revision = revision
         self.hg = condor_hg
 
-        if self.revision is not None:
-            self.hg.checkout_rev(self.revision)
-
-    def __del__(self):
-        if self.revision is not None:
-            self.hg.checkout_head()
-
     def create_commit_index(self, bugs):
         """
         Combines the vulnerability bug numbers with individual commits. Returns an

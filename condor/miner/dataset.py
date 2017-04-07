@@ -8,7 +8,7 @@ from itertools import chain
 log = logging.getLogger(__name__)
 
 
-def from_current(components):
+def from_current(components, is_regression=True):
     """
     Builds the data set from the components data structure where the feature
     matrix only contains the includes from the current revision. Returns a
@@ -25,12 +25,15 @@ def from_current(components):
         for j, include in enumerate(columns):
             if include in components[component]['includes'][-1]:
                 matrix[i, j] = 1
-        matrix[i, j_max] = len(components[component]['fixes'])
+        if is_regression:
+            matrix[i, j_max] = len(components[component]['fixes'])
+        else:
+            matrix[i, j_max] = 1
 
     return (matrix, rows, columns)
 
 
-def from_history(components):
+def from_history(components, is_regression=True):
     """
     Builds the data set from the components data structure where the feature
     matrix contains the includes from the current revision as well as the
@@ -69,7 +72,10 @@ def from_history(components):
         vulncount, indices = incl_indices[component].pop()
         for j in indices:
             matrix[i, j] = 1
-        matrix[i, j_max] = vulncount
+        if is_regression:
+            matrix[i, j_max] = vulncount
+        else:
+            matrix[i, j_max] = 1
 
     return (matrix, rows, columns)
 

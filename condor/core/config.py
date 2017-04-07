@@ -28,10 +28,6 @@ class Config:
         return self._miner_settings['files']['file_index']
 
     @property
-    def components(self):
-        return self._miner_settings['files']['components']
-
-    @property
     def dataset(self):
         return self._miner_settings['files']['dataset']
 
