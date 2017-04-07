@@ -14,13 +14,6 @@ class Combiner:
         self.revision = revision
         self.hg = condor_hg
 
-        if self.revision is not None:
-            self.hg.checkout_rev(self.revision)
-
-    def __del__(self):
-        if self.revision is not None:
-            self.hg.checkout_head()
-
     def create_commit_index(self, bugs):
         """
         Combines the vulnerability bug numbers with individual commits. Returns an
@@ -128,11 +121,11 @@ class Combiner:
             for identifier in metadata['files']:
                 with open(os.path.join(identifier[0], identifier[1]), 'r') as f:
                     includes.update(self._includes(f.read()))
-            extended[component]['includes'][-1] = includes
+            extended[component]['includes'][-1] = ('o', includes)
 
         return extended
 
-    def get_includes_rev(self, components, keep_duplicates=False):
+    def get_includes_rev(self, components):
         """
         Collects the include statements for each component from vulnerability-
         related revisions and adds the resulting set to the list of includes.
@@ -154,12 +147,16 @@ class Combiner:
                 includes = set()
                 for content in self.hg.rev_file_contents(files, fetchrev):
                     includes.update(self._includes(content))
-                if keep_duplicates or (includes not in extended[component]['includes'].values()):
-                    if len(includes) > 0:
-                        log.info('Adding new includes for component {} and revision {}'.format(component, fetchrev))
-                        extended[component]['includes'][rev] = includes
-                    else:
-                        log.error('Got empty include set for {} and revision {}'.format(component, fetchrev))
+
+                if len(includes) > 0:
+                    flag = 'o'
+                    if includes in [incl[1] for incl in extended[component]['includes'].values()]:
+                        flag = 'd'
+                    log.info('Adding ({}) includes for component {} and revision {}'.format(
+                        flag, component, fetchrev))
+                    extended[component]['includes'][rev] = (flag, includes)
+                else:
+                    log.error('Got empty include set for {} and revision {}'.format(component, fetchrev))
 
         return extended
 
@@ -176,6 +173,10 @@ class Combiner:
         component data structure with sets of fixing revision numbers.
         """
         log.info('Adding fix revision numbers to components')
+        if self.revision is None:
+            log.info('Revision is not specified, consider entire vulnerability history')
+        else:
+            log.info('Revision is set, only include vulnerable revisions up to {}'.format(self.revision))
 
         labeled = components.copy()
         for revisions in file_index.values():
