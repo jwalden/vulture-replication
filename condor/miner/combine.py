@@ -169,6 +169,10 @@ class Combiner:
         component data structure with sets of fixing revision numbers.
         """
         log.info('Adding fix revision numbers to components')
+        if self.revision is None:
+            log.info('Revision is not specified, consider entire vulnerability history')
+        else:
+            log.info('Revision is set, only include vulnerable revisions up to {}'.format(self.revision))
 
         labeled = components.copy()
         for revisions in file_index.values():
