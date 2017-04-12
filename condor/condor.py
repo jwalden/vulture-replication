@@ -274,7 +274,7 @@ class Condor:
         dates = self._get_datepairs(first_date, last_date)
         print('building {} matrices in total'.format(4 * len(dates)))
 
-        i, i_max = 1, 2 * len(dates)
+        i, i_max = 1, len(dates)
         for pair in dates:
             for j, date in enumerate(pair):
                 rev = self.hg.date_to_rev(date)
@@ -284,9 +284,11 @@ class Condor:
                     rev = self.hg.date_to_rev(date)
 
                 if j == 0:
-                    prefix = 'train_{}_'.format(date)
+                    print('building training matrix')
+                    prefix = '{}_train_{}_'.format(i, date)
                 else:
-                    prefix = 'test_{}_'.format(date)
+                    print('building test matrix')
+                    prefix = '{}_test_{}_'.format(i, date)
                 reg_path = os.path.join(dir_path, prefix + 'reg.pickle')
                 cla_path = os.path.join(dir_path, prefix + 'cla.pickle')
                 components_path = os.path.join(indices_path, '{}.pickle'.format(
@@ -300,8 +302,9 @@ class Condor:
                 self.hg.checkout_rev(rev)
                 self._build_matrices(components_path, reg_path, cla_path)
 
-                i += 1
-                print('')
+            print('')
+            i += 1
+
 
         self.hg.checkout_head()
         print('done')
@@ -337,11 +340,13 @@ class Condor:
             components = self.combiner.get_includes_rev(components)
             print('storing components')
             serialize.persist(components, components_path)
+
         if not os.path.exists(reg_path):
             print('building and storing regression matrix')
             data = dataset.to_sparse(
                 dataset.from_history(components, is_regression=True))
             serialize.persist(data, reg_path)
+
         if not os.path.exists(cla_path):
             print('building classification matrix')
             data = dataset.to_sparse(
