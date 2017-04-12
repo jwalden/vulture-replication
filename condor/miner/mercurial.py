@@ -96,10 +96,13 @@ class CondorHg:
         Returns the datetime of a revision.
         """
         revision = self.current_revision() if revision is None else revision
-        return self.client.log(revrange=revision)[0][6]
+        return self.client.log(revrange=revision)[0][6].date()
 
     def date_to_rev(self, date):
         """
         Returns the last revision number for a given date.
         """
-        return self.client.log(date=date)[0][0]
+        commits = self.client.log(date=date)
+        if len(commits) > 0:
+            return int(commits[0][0])
+        return None

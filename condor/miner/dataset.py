@@ -45,7 +45,9 @@ def from_history(components, is_regression=True):
     matrix represents the target, i.e. the vulnerability vector.
     """
     log.info('Building data set from history')
+    log.debug('Creating list of columns')
     columns = list(set(chain.from_iterable([incl[1] for incl in chain.from_iterable([c['includes'].values() for c in components.values()])])))
+    log.debug('Creating list of rows')
     if is_regression:
         rows = [c[0] for c in components.items() for i in c[1]['includes'].keys() if c[1]['includes'][i][0] == 'o']
     else:
@@ -53,6 +55,7 @@ def from_history(components, is_regression=True):
     matrix = np.zeros((len(rows), len(columns) + 1), dtype=np.uint8)
     j_max = len(columns)
 
+    log.debug('Fetch indices of the include columns and vulncount per component')
     # Fetch the indices of the 1-columns and vulncount for each component
     incl_indices = {c: [] for c in components.keys()}
     for component, data in components.items():
@@ -77,6 +80,7 @@ def from_history(components, is_regression=True):
             if is_regression:
                 vulncount += 1
 
+    log.debug('Assign values in matrix')
     # Assign the 1 values and vulncount to the previously fetched indices
     for i, component in enumerate(rows):
         vulncount, indices = incl_indices[component].pop()

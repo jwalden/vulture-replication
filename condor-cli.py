@@ -52,6 +52,10 @@ parser.add_argument('--build-dataset', metavar=('in_path', 'type', 'period'), ty
                     help='''Build the data set from the specified component index. The type can be "r" for regression or "c" for classification.
                     The period is either "history" or "current", where the resulting matrix will or will not contain the includes from the history
                     of vulnerable revisions.''')
+parser.add_argument('--build-semiannual', metavar='dir_path', type=str,
+                    help='''Build all regression and classification matrices for the entire repository history. This argument will build a training and
+                    a test matrix half a year aprt. The first two training matrices are shifted by a quarter in order to avoid training and
+                    test matrices on the same date.''')
 parser.add_argument('-r', '--repo', metavar='path', type=str,
                     help='The path to the mozilla-central mercurial repository. Required for building the commit, file and component indices.')
 
@@ -62,7 +66,8 @@ if args['repo'] is None and (args['build_commit_index'] is True
                              or args['build_components']
                              or args['build_rev_components']
                              or args['build_date_components']
-                             or args['add_rev_includes']):
+                             or args['add_rev_includes']
+                             or args['build_semiannual']):
     parser.error('repository path argument required: --repo or -r')
     exit(1)
 
@@ -121,7 +126,6 @@ if args['build_date_components']:
         exit(1)
     condor.extract_components(args['build_date_components'][0], date=date)
 
-
 if args['add_rev_includes']:
     condor.add_revision_includes(args['add_rev_includes'])
 
@@ -134,3 +138,6 @@ if args['build_dataset']:
         print('ERROR: period must either be "history" or "current"')
         exit(1)
     condor.build_dataset(argvars[0], argvars[1], argvars[2])
+
+if args['build_semiannual']:
+    condor.build_semiannual(args['build_semiannual'])

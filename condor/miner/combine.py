@@ -133,9 +133,10 @@ class Combiner:
         provided component dict.
         """
         log.info('Fetching includes from past revisions')
-        if len(max(components.values(), key=lambda x: len(x['fixes']))['fixes']) == 0:
+        """no_fixes = len(max(components.values(), key=lambda x: len(x['fixes']))['fixes'])
+        if no_fixes == 0 and int(self.revision) > 0:
             log.error('Components must be labeled before fetching the revision includes')
-            raise ValueError('Components must be labeled before fetching the revision includes')
+            raise ValueError('Components must be labeled before fetching the revision includes')"""
 
         extended = components.copy()
         for component, data in extended.items():

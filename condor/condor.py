@@ -1,5 +1,6 @@
 import os.path
 import numpy as np
+import datetime
 from pprint import pprint
 from hglib.error import ServerError, CommandError
 from itertools import chain
@@ -92,6 +93,14 @@ class Condor:
         else:
             print('the feature matrix has not yet been built')
 
+    def diff(self, rev1, rev2):
+        file_index = self._read(self.config.file_index)
+        for component in sorted(list(self.combiner.get_diff(file_index, rev1, rev2))):
+            print(component)
+
+    def print_structure(self, path):
+        pprint(self._read(path), width=140)
+
     @timeit
     def scrape_mfsa_overview(self):
         print('scraping and storing MFSA overview')
@@ -147,6 +156,10 @@ class Condor:
 
     @timeit
     def extract_components(self, out_path, revision=None, date=None):
+        if not os.path.exists(self.config.file_index):
+            print('ERROR: file index does not yet exist')
+            exit(1)
+
         print('building components and storing at {}'.format(out_path))
         print('extracting all c, cpp and h files from the repository')
         if revision is None and date is None:
@@ -187,7 +200,8 @@ class Condor:
         index = self.combiner.get_includes_fs(index)
 
         print('assigning vulnerability fix revisions to each component')
-        index = self.combiner.label_components(serialize.read(self.config.file_index), index)
+        file_index = serialize.read(self.config.file_index)
+        index = self.combiner.label_components(file_index, index)
         serialize.persist(index, out_path)
 
         if revision is not None or date is not None:
@@ -235,13 +249,105 @@ class Condor:
 
         print('done')
 
-    def print_structure(self, path):
-        pprint(self._read(path), width=140)
+    @timeit
+    def build_semiannual(self, dir_path):
+        if not os.path.exists(self.config.file_index):
+            print('ERROR: file index does not yet exist')
+            exit(1)
 
-    def diff(self, rev1, rev2):
-        file_index = self._read(self.config.file_index)
-        for component in sorted(list(self.combiner.get_diff(file_index, rev1, rev2))):
-            print(component)
+        print('building the matrices for the complete history, this will take a long time')
+        print('storing results in {}'.format(dir_path))
+        indices_path = os.path.join(dir_path, 'indices')
+        if not os.path.exists(indices_path):
+            os.makedirs(indices_path)
+        else:
+            if not os.path.isdir(dir_path):
+                print('ERROR: not a directory: {}'.format(dir_path))
+                exit(1)
+
+        self.hg.checkout_head()
+
+        first_date = self.hg.rev_date(0)
+        last_date = self.hg.rev_date(self.hg.current_revision())
+
+        print('first date: {}, last date: {}'.format(first_date, last_date))
+        dates = self._get_datepairs(first_date, last_date)
+        print('building {} matrices in total'.format(4 * len(dates)))
+
+        i, i_max = 1, 2 * len(dates)
+        for pair in dates:
+            for j, date in enumerate(pair):
+                rev = self.hg.date_to_rev(date)
+                while rev is None:
+                    print('{} has no rev'.format(date))
+                    date = date + datetime.timedelta(days=1)
+                    rev = self.hg.date_to_rev(date)
+
+                if j == 0:
+                    prefix = 'train_{}_'.format(date)
+                else:
+                    prefix = 'test_{}_'.format(date)
+                reg_path = os.path.join(dir_path, prefix + 'reg.pickle')
+                cla_path = os.path.join(dir_path, prefix + 'cla.pickle')
+                components_path = os.path.join(indices_path, '{}.pickle'.format(
+                    date
+                ))
+
+                print('building matrices {} of {} (date: {}, rev: {})'.format(
+                    i, i_max, date, rev
+                ))
+                self.combiner.revision = rev
+                self.hg.checkout_rev(rev)
+                self._build_matrices(components_path, reg_path, cla_path)
+
+                i += 1
+                print('')
+
+        self.hg.checkout_head()
+        print('done')
+
+    def _get_datepairs(self, first_date, last_date):
+        train_delta = datetime.timedelta(days=91)
+        test_delta = datetime.timedelta(days=182)
+
+        dates = [(first_date, first_date + test_delta)]
+        while True:
+            next_train = dates[-1][0] + train_delta
+            next_test = next_train + test_delta
+
+            if next_train >= last_date or next_test > last_date:
+                break
+            else:
+                dates.append((next_train, next_test))
+
+        return dates
+
+    def _build_matrices(self, components_path, reg_path, cla_path):
+        if os.path.exists(components_path):
+            components = serialize.read(components_path)
+        else:
+            print('creating components')
+            components = self.combiner.create_components()
+            print('getting includes')
+            components = self.combiner.get_includes_fs(components)
+            print('labelling components')
+            file_index = serialize.read(self.config.file_index)
+            components = self.combiner.label_components(file_index, components)
+            print('getting revision includes')
+            components = self.combiner.get_includes_rev(components)
+            print('storing components')
+            serialize.persist(components, components_path)
+        if not os.path.exists(reg_path):
+            print('building and storing regression matrix')
+            data = dataset.to_sparse(
+                dataset.from_history(components, is_regression=True))
+            serialize.persist(data, reg_path)
+        if not os.path.exists(cla_path):
+            print('building classification matrix')
+            data = dataset.to_sparse(
+                dataset.from_history(components, is_regression=False))
+            serialize.persist(data, cla_path)
+
 
     def _read(self, path):
         try:
