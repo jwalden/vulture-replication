@@ -97,3 +97,9 @@ class CondorHg:
         """
         revision = self.current_revision() if revision is None else revision
         return self.client.log(revrange=revision)[0][6]
+
+    def date_to_rev(self, date):
+        """
+        Returns the last revision number for a given date.
+        """
+        return self.client.log(date=date)[0][0]

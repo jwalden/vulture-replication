@@ -146,18 +146,26 @@ class Condor:
         serialize.persist(file_index, self.config.file_index)
 
     @timeit
-    def extract_components(self, path, revision=None):
-        print('building components and storing at {}'.format(path))
+    def extract_components(self, out_path, revision=None, date=None):
+        print('building components and storing at {}'.format(out_path))
         print('extracting all c, cpp and h files from the repository')
-        if revision is None:
+        if revision is None and date is None:
             print('using most recent revision')
         else:
-            try:
-                self.combiner.revision = revision
+            if revision is not None:
+                rev = revision
                 print('extracting components for revision {} ({})'.format(
-                    revision, self.combiner.hg.rev_date(revision)))
-                print('checking out revision {}'.format(revision))
-                self.hg.checkout_rev(revision)
+                    rev, self.combiner.hg.rev_date(revision)))
+            else:
+                print('extracting components for date {}, fetching revision'.format(date))
+                rev = self.hg.date_to_rev(date)
+                print('latest revision of {} is {}'.format(date, rev))
+
+            self.combiner.revision = rev
+
+            try:
+                print('checking out revision {}'.format(rev))
+                self.hg.checkout_rev(rev)
             except CommandError:
                 print('ERROR: invalid revision {}'.format(revision))
                 exit(1)
@@ -180,9 +188,9 @@ class Condor:
 
         print('assigning vulnerability fix revisions to each component')
         index = self.combiner.label_components(serialize.read(self.config.file_index), index)
-        serialize.persist(index, path)
+        serialize.persist(index, out_path)
 
-        if revision is not None:
+        if revision is not None or date is not None:
             print('reverting to head revision')
             self.hg.checkout_head()
         print('done')

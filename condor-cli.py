@@ -2,7 +2,7 @@
 
 import argparse
 import logging
-
+import datetime
 
 from condor.condor import Condor
 
@@ -44,6 +44,8 @@ parser.add_argument('--build-components', metavar='out_path', type=str,
                     help='Build the components for the currently checked out revision and store the index at path.')
 parser.add_argument('--build-rev-components', metavar=('out_path', 'rev'), type=str, nargs=2,
                     help='Build the components for the specified revision and store the index at path.')
+parser.add_argument('--build-date-components', metavar=('out_path', 'date'), type=str, nargs=2,
+                    help='Build the components for the specified YYYY-MM-DD date and store the index at path.')
 parser.add_argument('--add-rev-includes', metavar='path', type=str,
                     help='Add the includes from the history of vulnerabile revisions to the specified component index.')
 parser.add_argument('--build-dataset', metavar=('in_path', 'type', 'period'), type=str, nargs=3,
@@ -59,6 +61,7 @@ if args['repo'] is None and (args['build_commit_index'] is True
                              or args['build_file_index'] is True
                              or args['build_components']
                              or args['build_rev_components']
+                             or args['build_date_components']
                              or args['add_rev_includes']):
     parser.error('repository path argument required: --repo or -r')
     exit(1)
@@ -105,7 +108,19 @@ if args['build_rev_components']:
     except ValueError:
         print('ERROR: revision must be an integer')
         exit(1)
-    condor.extract_components(args['build_rev_components'][0], rev)
+    condor.extract_components(args['build_rev_components'][0], revision=rev)
+
+if args['build_date_components']:
+    try:
+        y, m, d = args['build_date_components'][1].split('-')
+        if len(y) != 4 or len(m) != 2 or len(d) != 2:
+            raise ValueError
+        date = datetime.date(int(y), int(m), int(d))
+    except (ValueError, TypeError):
+        print('ERROR: Please specify the date as YYYY-MM-DD')
+        exit(1)
+    condor.extract_components(args['build_date_components'][0], date=date)
+
 
 if args['add_rev_includes']:
     condor.add_revision_includes(args['add_rev_includes'])
