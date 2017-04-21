@@ -55,6 +55,7 @@ class Condor:
         data = index['index']
         print('source:                 {}'.format(meta['source_id']))
         print('node:                   {}'.format(meta['node']))
+        print('node date:              {}'.format(self.vcs.node_to_date(meta['node'])))
         print('contains history:       {}'.format(meta['has_history']))
         print('index version:          {}'.format(meta['version']))
         print('')
