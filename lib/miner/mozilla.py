@@ -51,8 +51,7 @@ class MozillaMiner(Miner):
             mfsa_path = os.path.join(self.advisory_path, advisory[0] + '.html')
             if not ignore_existing or (ignore_existing and not os.path.exists(mfsa_path)):
                 log.info('Scraping {} of {}: {}'.format(i, count, advisory[0]))
-                r = requests.get(self.BASE_URL + advisory[1],
-                                 headers=self.HEADERS)
+                r = requests.get(self.BASE_URL + advisory[1], headers=self.HEADERS)
                 with open(mfsa_path, 'w') as f:
                     f.write(r.content)
 

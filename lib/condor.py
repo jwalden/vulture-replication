@@ -1,5 +1,6 @@
 import os
 import logging
+from itertools import chain
 
 
 from lib.core import serialize
@@ -47,6 +48,23 @@ class Condor:
         print('head node:      {} ({})'.format(head_node, self.vcs.node_to_date(head_node)))
         curr_node = self.vcs.fetch_current_node()
         print('current node:   {} ({})'.format(curr_node, self.vcs.node_to_date(curr_node)))
+
+    def print_component_stats(self, read_path):
+        index = read_or_exit(read_path)
+        meta = index['meta']
+        data = index['index']
+        print('source:                 {}'.format(meta['source_id']))
+        print('node:                   {}'.format(meta['node']))
+        print('contains history:       {}'.format(meta['has_history']))
+        print('index version:          {}'.format(meta['version']))
+        print('')
+        print('components:             {}'.format(len(data.keys())))
+        print('components vulnerable:  {}'.format(sum(1 if len(c['fixes']) > 0 else 0 for c in data.values())))
+        print('vulnerabilities:        {}'.format(sum(len(c['fixes']) for c in data.values())))
+        print('distinct includes:      {}'.format(
+            len(set(chain.from_iterable(
+                [incl[1] for incl in chain.from_iterable([c['includes'].values() for c in data.values()])])))
+        ))
 
     @timeit
     def checkout_head(self):

@@ -28,6 +28,8 @@ indices.
 general = parser.add_argument_group('general', 'general helper functions')
 general.add_argument('--repo-stats', action='store_true',
                      help='print statistics about the repository')
+general.add_argument('--component-stats', metavar='read_path',
+                     help='print statistics about the component index at read_path')
 general.add_argument('--checkout-head', action='store_true',
                      help='check out the head node of the appropriate repository')
 general.add_argument('--checkout', metavar='node',
@@ -84,6 +86,9 @@ condor = Condor(args['source'], args['repo'])
 if args['repo_stats']:
     condor.print_repo_stats()
 
+if args['component_stats']:
+    condor.print_component_stats(args['component_stats'])
+
 if args['checkout_head']:
     condor.checkout_head()
 
@@ -107,7 +112,7 @@ if args['build_date_components']:
     argvars = args['build_date_components']
     try:
         date = helpers.parse_date(argvars[1])
-    except InvalidDateException:
+    except (InvalidDateException, ValueError):
         print('ERROR: date must be of format YYYY-MM-DD')
         exit(1)
     condor.build_component_index(argvars[0], date=date, exclude_history=args['exclude_history'])
