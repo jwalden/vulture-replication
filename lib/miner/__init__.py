@@ -1,0 +1,1 @@
+from mozilla import MozillaMiner

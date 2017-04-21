@@ -29,7 +29,9 @@ general = parser.add_argument_group('general', 'general helper functions')
 general.add_argument('--repo-stats', action='store_true',
                      help='print statistics about the repository')
 general.add_argument('--checkout-head', action='store_true',
-                     help='check out the head revision of the appropriate repository')
+                     help='check out the head node of the appropriate repository')
+general.add_argument('--checkout', metavar='node',
+                     help='check out the specified node of the appropriate repository')
 general.add_argument('-p', '--print', metavar='path', type=str,
                      help='pretty print a pickled data structure')
 
@@ -84,6 +86,9 @@ if args['repo_stats']:
 
 if args['checkout_head']:
     condor.checkout_head()
+
+if args['checkout']:
+    condor.checkout_node(args['checkout'])
 
 if args['scrape']:
     condor.scrape()
