@@ -63,7 +63,7 @@ Scraping and the generation of the preliminary indices is source (project) speci
 
 Please note that scraping the individual advisories will send a lot of HTTP requests in a short amount of time. Because of this, the individual advisory pages are stored in data.
 
-#####Implementations
+##### Implementations
 Currently the following sources have been implemented.
 - Mozilla: mozilla-central
 
