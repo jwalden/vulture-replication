@@ -12,6 +12,7 @@ log = logging.getLogger(__name__)
 class Components:
 
     INCLUDES_PATTERN = re.compile(r'^#include (<|")(.*?)(>|").*$', re.MULTILINE)
+    DEFAULT_EXT = ['.c', '.cpp', '.h']
     VERSION = 1
 
     def __init__(self, vcs, repo_path, source_id, max_node=None, extensions=None):
@@ -29,7 +30,7 @@ class Components:
         self.repo_path = repo_path
         self.max_node = max_node if max_node is not None else vcs.fetch_head_node()
         self.max_node_date = vcs.node_to_date(self.max_node)
-        self.extensions = [e.lower() for e in extensions] if extensions is not None else ['.c', '.cpp', '.h']
+        self.extensions = [e.lower() for e in extensions] if extensions is not None else self.DEFAULT_EXT
         self.fixes_added = False
         self.index = {
             'meta': {

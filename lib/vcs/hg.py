@@ -67,6 +67,7 @@ class Hg(VCS):
         return self.repo.log(revrange=node)[0][6].date()
 
     def date_to_node(self, date):
+        log.info('Fetching node for date {}'.format(date))
         nodes = self.repo.log(date=date)
         if len(nodes) > 0:
             return nodes[0][1]

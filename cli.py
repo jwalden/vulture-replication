@@ -62,6 +62,9 @@ dataset.add_argument('--build-dataset', metavar=('read_path', 'save_path', 'type
                           can be either "r" for regression or "c" for classification. the period is either "history" or
                           "current", where the resulting matrix will or will not contain the includes from the history
                           of vulnerable nodes.''')
+dataset.add_argument('--build-semiannual', metavar='save_dir', type=str, nargs=1,
+                     help='''build semiannual component indices and history matrices for the entire repository history
+                     ''')
 
 flags = parser.add_argument_group('flags', 'flags required for most other arguments')
 flags.add_argument('-s', '--source', type=str, choices=('mozilla', 'aosp'),
@@ -120,3 +123,7 @@ if args['build_date_components']:
 if args['build_dataset']:
     argvars = args['build_dataset']
     condor.build_data_set(argvars[0], argvars[1], argvars[2], argvars[3])
+
+if args['build_semiannual']:
+    argvars = args['build_semiannual']
+    condor.build_semiannual(argvars[0])

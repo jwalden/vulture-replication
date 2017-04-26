@@ -1,6 +1,7 @@
 import time
 import logging
 import datetime
+import os
 from functools import wraps
 from pprint import pprint
 
@@ -71,3 +72,23 @@ def parse_date(datestring):
     if len(y) != 4 or len(m) != 2 or len(d) != 2:
         raise InvalidDateException('Date must be of format YYYY-MM-DD')
     return datetime.date(int(y), int(m), int(d))
+
+
+def count_files(root_dir, extensions):
+    """
+    Recursively counts the files with the given extensions. 
+    
+    :param root_dir: Path to the directory to start the search from.
+    :param extensions: Extensions to consider for the count. Every extension must have a leading dot and be lower case.
+    :return: File count.
+    """
+    log.info('Counting files in {}'.format(root_dir))
+    count = 0
+    for path, dirs, files in os.walk(root_dir):
+        for filename in files:
+            name, ext = os.path.splitext(os.path.split(filename)[-1])
+            if ext.lower() in extensions:
+                count += 1
+
+    log.info('Found {} files with extensions {}'.format(count, extensions))
+    return count
