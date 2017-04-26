@@ -75,6 +75,7 @@ class Hg(VCS):
     def sort_nodes_asc(self, nodes):
         rev_numbers = []
         for node in nodes:
+            # TODO: Sort by date instead of local scope revision number?
             number = int(self.repo.log(revrange=node)[0][0])
             rev_numbers.append((number, node))
         rev_numbers = sorted(rev_numbers, key=lambda x: x[0])
