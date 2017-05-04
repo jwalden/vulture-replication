@@ -2,10 +2,6 @@ import numpy as np
 import cPickle as pickle
 
 class MatrixHelper:
-
-    def __init__(self):
-        self.test = 1
-
     def load_from_parse(self, path):
         matrix = None
         with open(path, 'rb') as f:
