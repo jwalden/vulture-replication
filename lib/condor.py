@@ -9,6 +9,7 @@ from lib.core.helpers import timeit, read_or_exit, count_files
 from lib.core.components import Components
 from lib.core.dataset import DataSetBuilder
 from lib.core.exceptions import NodeMismatchException, SourceMismatchException, MissingHistoryException
+from lib.core.treemap import TreeMap
 from lib.miner import MozillaMiner
 from lib.vcs import Hg
 
@@ -102,6 +103,33 @@ class Condor:
         print('checking out node {}'.format(node))
         self.vcs.checkout_node(node)
         print('done')
+
+    @timeit
+    def generate_treemap(self, read_path, save_path):
+        """
+        Generates the treemap for the given component index and stores it in tm3 format.
+        
+        :param read_path: The path to the component index to use.
+        :param save_path: The path to store the treemap at.
+        :param root_dir: The name of the root directory of the repository.
+        :return: None
+        """
+        print('generating treemap for {}'.format(read_path))
+        index = read_or_exit(read_path)
+        if self.vcs.fetch_current_node() != index['meta']['node']:
+            print('reverting repository to component index node: {}'.format(index['meta']['node']))
+            self.vcs.checkout_node(index['meta']['node'])
+        treemap = TreeMap(index, self.repo_path)
+        treemap.generate_entries()
+
+        path = save_path
+        if not path.endswith('.tm3'):
+            path += '.tm3'
+        treemap.save_tm3(path)
+
+        if self.vcs.fetch_current_node() != self.vcs.fetch_head_node():
+            print('reverting repository to head node')
+            self.vcs.checkout_head()
 
     @timeit
     def scrape(self):

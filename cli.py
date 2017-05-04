@@ -34,6 +34,9 @@ general.add_argument('--checkout-head', action='store_true',
                      help='check out the head node of the appropriate repository')
 general.add_argument('--checkout', metavar='node',
                      help='check out the specified node of the appropriate repository')
+general.add_argument('--treemap', metavar=('read_path', 'save_path'), type=str, nargs=2,
+                     help='generate a treemap for the component index at read_path and save it in tm3 format at '
+                          'save_path.')
 general.add_argument('-p', '--print', metavar='path', type=str,
                      help='pretty print a pickled data structure')
 
@@ -55,7 +58,7 @@ components.add_argument('--exclude-history', action='store_true',
                         the creation of the component index significantly, but will render the creation of the history
                         data set impossible''')
 
-dataset = parser.add_argument_group('dataset', 'arguments for building the machine learning dataset from the component'
+dataset = parser.add_argument_group('dataset', 'arguments for building the machine learning dataset from the component '
                                                'index')
 dataset.add_argument('--build-dataset', metavar=('read_path', 'save_path', 'type', 'period'), type=str, nargs=4,
                      help='''build the data set from the component index at read_path and save it at save_path. the type
@@ -97,6 +100,9 @@ if args['checkout_head']:
 
 if args['checkout']:
     condor.checkout_node(args['checkout'])
+
+if args['treemap']:
+    condor.generate_treemap(args['treemap'][0], args['treemap'][1])
 
 if args['scrape']:
     condor.scrape()
