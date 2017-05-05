@@ -16,27 +16,35 @@ class MatrixHelper:
 
         return (matrix, rows, columns)
 
-    def get_not_vulnerable_components(self, matrix, rows):
+    def get_not_vulnerable_components(self, matrix, rows=None):
         """
         Gibt alle Samples und die zugehoerigen Komponentennamen zurueck, deren
         vulnerability counter == 0 ist.
         """
 
         not_vulnerable_indices = np.where(matrix[:,-1] == 0)
-        not_vulnerable_rows = [rows[i] for i in (not_vulnerable_indices[0])]
         not_vulnerable_matrix  = (matrix[not_vulnerable_indices,:])[0]
+
+        if rows is None:
+            return not_vulnerable_matrix
+
+        not_vulnerable_rows = [rows[i] for i in (not_vulnerable_indices[0])]
 
         return (not_vulnerable_matrix, not_vulnerable_rows)
 
-    def get_vulnerable_components(self, matrix, rows):
+    def get_vulnerable_components(self, matrix, rows=None):
         """
         Gibt alle Samples und die zugehoerigen Komponentennamen zurueck, deren
         vulnerability counter > 0 ist.
         """
 
         vulnerable_indices = np.where(matrix[:,-1] > 0)
-        vulnerable_rows = [rows[i] for i in (vulnerable_indices[0])]
         vulnerable_matrix  = (matrix[vulnerable_indices,:])[0]
+
+        if rows is None:
+            return vulnerable_matrix
+
+        vulnerable_rows = [rows[i] for i in (vulnerable_indices[0])]
 
         return (vulnerable_matrix, vulnerable_rows)
 
