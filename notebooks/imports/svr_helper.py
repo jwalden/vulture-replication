@@ -48,7 +48,7 @@ class SVRHelper:
         compare_matrix = []
 
         for i in range(len(target_prediction)):
-            compare_matrix.append([test_rows[i], target_prediction[i], test_target[i]])
+            compare_matrix.append([test_rows[i], round(float(target_prediction[i])), test_target[i]])
 
         self.compare_matrix = np.array(compare_matrix)
         self.compare_matrix_with_deleted = None
@@ -86,10 +86,10 @@ class SVRHelper:
         for i in range(len(not_vulnerable_rows)):
             if not_vulnerable_rows[i] in validation_rows:
                 validation_index = validation_rows.index(not_vulnerable_rows[i])
-                compare_matrix.append([not_vulnerable_rows[i], target_prediction[i], validation_feature_matrix[validation_index, -1]])
-                compare_matrix_with_deleted.append([not_vulnerable_rows[i], target_prediction[i], validation_feature_matrix[validation_index, -1]])
+                compare_matrix.append([not_vulnerable_rows[i], round(float(target_prediction[i])), validation_feature_matrix[validation_index, -1]])
+                compare_matrix_with_deleted.append([not_vulnerable_rows[i], round(float(target_prediction[i])), validation_feature_matrix[validation_index, -1]])
             else:
-                compare_matrix_with_deleted.append([not_vulnerable_rows[i], target_prediction[i], 'Deleted'])
+                compare_matrix_with_deleted.append([not_vulnerable_rows[i], round(float(target_prediction[i])), 'Deleted'])
 
         self.compare_matrix = np.array(compare_matrix)
         self.compare_matrix_with_deleted = np.array(compare_matrix_with_deleted)
