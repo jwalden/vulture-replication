@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from sklearn.svm import LinearSVR
 import copy
@@ -10,6 +11,7 @@ class SVRHelper:
         self.matrix_helper = MatrixHelper()
         self.compare_matrix = None
         self.compare_matrix_with_deleted = None
+        self.time = None
 
     def calculate_validation_compare_matrix(self, matrices, sampling_factor=(2.0/3)):
         '''
@@ -42,7 +44,7 @@ class SVRHelper:
         test_data, test_target = self.matrix_helper.create_data_target(test_matrix)
 
         # Train SVR Model and predict vulnerrabilities for test data
-        target_prediction = self.predict(training_data, training_target, test_data[:, range(features_count)])
+        target_prediction, time = self.predict(training_data, training_target, test_data)
 
         # Create matrix with component names, predicted vulnerabilities and actual number of vulnerabilities in test set
         compare_matrix = []
@@ -52,6 +54,7 @@ class SVRHelper:
 
         self.compare_matrix = np.array(compare_matrix)
         self.compare_matrix_with_deleted = None
+        self.time = time
 
 
     def calculate_semiannual_compare_matrix(self, matrices, validation_matrices):
@@ -78,7 +81,7 @@ class SVRHelper:
         training_data, training_target = self.matrix_helper.create_data_target(feature_matrix)
 
         # Train SVR Model and predict vulnerrabilities for all components without any vulnerabilities
-        target_prediction = self.predict(training_data, training_target, not_vulnerable_matrix[:, range(features_count)])
+        target_prediction, time = self.predict(training_data, training_target, not_vulnerable_matrix[:, range(features_count)])
 
         # Create matrix with component names, predicted vulnerabilities and actual number of vulnerabilities in validation revision
         compare_matrix = []
@@ -93,9 +96,12 @@ class SVRHelper:
 
         self.compare_matrix = np.array(compare_matrix)
         self.compare_matrix_with_deleted = np.array(compare_matrix_with_deleted)
+        self.time = time
 
 
     def predict(self, training_data, training_target, test_data):
+        start = time.time()
+
         # Create support vector regression
         svr = LinearSVR(C=0.2)
 
@@ -105,7 +111,10 @@ class SVRHelper:
         # Predict target for all components without any known vulnerabilities
         target_prediction = svr.predict(test_data)
 
-        return target_prediction
+        end = time.time()
+        elapsed = (end - start) / 60
+
+        return target_prediction, elapsed
 
 
     def get_compare_matrix(self, with_deleted_components=False):
@@ -114,7 +123,7 @@ class SVRHelper:
         return self.compare_matrix
 
     def get_compare_matrix_sorted(self, with_deleted_components=False):
-        if (with_deleted_components and self.compare_matrix_with_deleted != None):
+        if (with_deleted_components and self.compare_matrix_with_deleted is not None):
             sorted_indeces = np.array(self.compare_matrix_with_deleted[:,1], dtype='f').argsort()[::-1]
             return copy.copy(self.compare_matrix_with_deleted[sorted_indeces])
 
