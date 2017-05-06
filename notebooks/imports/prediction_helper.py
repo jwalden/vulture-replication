@@ -6,7 +6,7 @@ import copy
 
 from matrix_helper import MatrixHelper
 
-class ClassificationHelper:
+class PredictionHelper:
 
     def __init__(self):
         self.matrix_helper = MatrixHelper()
@@ -59,6 +59,47 @@ class ClassificationHelper:
             compare_matrix.append([test_rows[i], round(float(target_prediction[i])), test_target[i]])
 
         self.compare_matrix = np.array(compare_matrix)
+        self.time = time
+
+    def calculate_semiannual_compare_matrix(self, matrices, validation_matrices, prediction_type='SVR'):
+        '''
+        Erstellt eine Vergleichsmatrix fuer zwei verschiedene Revisionen. Mit der feature matrix
+        einer alten Revision wird ein Regressionsmodell angelernt und auf alle Komponenten der selben
+        Revision angewendet, die zu deren Zeitpunkt keine Verwundbarkeiten hatten. In der Vergleichsmatrix
+        werden die vorhergesagten Verwundbarkeiten mit den tatsaechlichen Verwundbarkeiten der gleichen
+        Komponenten zu einer spaeteren Revision verglichen. Die Vergleichsmatrix enthaelt folgende 3 Spalten:
+        [:, 0] = Name der Komponente
+        [:, 1] = Vorhergesagte Anzahl Verwundbarkeiten aufgrund des Regressionsmodells
+        [:, 2] = Tatsaechliche Anzahl Verwundbarkeiten in der spaeteren regression (validation_matrices)
+        '''
+        feature_matrix = matrices[0]
+        validation_feature_matrix = validation_matrices[0]
+        rows = matrices[1]
+        validation_rows = validation_matrices[1]
+        features_count = feature_matrix.shape[1] - 1
+
+        # Get all components that haven't any known vulnerabilities
+        (not_vulnerable_matrix, not_vulnerable_rows) = self.matrix_helper.get_components_without_vulnerabilities(feature_matrix, rows)
+
+        # Split feature matrix into data and target
+        training_data, training_target = self.matrix_helper.create_data_target(feature_matrix)
+
+        # Train SVR Model and predict vulnerrabilities for all components without any vulnerabilities
+        target_prediction, time = self.predict(training_data, training_target, not_vulnerable_matrix[:, range(features_count)], prediction_type)
+
+        # Create matrix with component names, predicted vulnerabilities and actual number of vulnerabilities in validation revision
+        compare_matrix = []
+        compare_matrix_with_deleted = []
+        for i in range(len(not_vulnerable_rows)):
+            if not_vulnerable_rows[i] in validation_rows:
+                validation_index = validation_rows.index(not_vulnerable_rows[i])
+                compare_matrix.append([not_vulnerable_rows[i], round(float(target_prediction[i])), validation_feature_matrix[validation_index, -1]])
+                compare_matrix_with_deleted.append([not_vulnerable_rows[i], round(float(target_prediction[i])), validation_feature_matrix[validation_index, -1]])
+            else:
+                compare_matrix_with_deleted.append([not_vulnerable_rows[i], round(float(target_prediction[i])), 'Deleted'])
+
+        self.compare_matrix = np.array(compare_matrix)
+        self.compare_matrix_with_deleted = np.array(compare_matrix_with_deleted)
         self.time = time
 
     def predict(self, training_data, training_target, test_data, prediction_type):
