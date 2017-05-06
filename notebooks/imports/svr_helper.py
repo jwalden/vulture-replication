@@ -13,50 +13,6 @@ class SVRHelper:
         self.compare_matrix_with_deleted = None
         self.time = None
 
-    def calculate_validation_compare_matrix(self, matrices, sampling_factor=(2.0/3)):
-        '''
-        Erstellt eine Vergleichsmatrix auf der feature matrix einer einzelnen Revision mit folgenden 3 Spalten:
-        [:, 0] = Name der Komponente
-        [:, 1] = Vorhergesagte Anzahl Verwundbarkeiten aufgrund des Regressionsmodells
-        [:, 2] = Tatsaechliche Anzahl Verwundbarkeiten im Testset
-
-        Dabei wird die feature matrix mit stratified sampling gemaess dem uebergebenen Faktor in training und test set aufgeteilt.
-        '''
-        feature_matrix = matrices[0]
-        rows = matrices[1]
-        features_count = feature_matrix.shape[1] - 1
-
-        # Create own matrices for vulenrable and not vulnerable entries
-        vulnerable_matrix, vulnerable_rows = self.matrix_helper.get_vulnerable_components(feature_matrix, rows)
-        not_vulnerable_matrix, not_vulnerable_rows = self.matrix_helper.get_not_vulnerable_components(feature_matrix, rows)
-
-        # Split into training sets (2/3) and test sets (1/3)
-        vulnerable_training, vulnerable_test = self.matrix_helper.split_training_test(vulnerable_matrix, sampling_factor, vulnerable_rows)
-        not_vulnerable_training, not_vulnerable_test = self.matrix_helper.split_training_test(not_vulnerable_matrix, sampling_factor, not_vulnerable_rows)
-
-        # Concatenate vulnerable/not-vulnerable
-        training_matrix = np.concatenate((not_vulnerable_training[0], vulnerable_training[0]), axis=0)
-        test_matrix = np.concatenate((not_vulnerable_test[0], vulnerable_test[0]), axis=0)
-        test_rows = not_vulnerable_test[1] + vulnerable_test[1]
-
-        # Split into training and target matrices
-        training_data, training_target = self.matrix_helper.create_data_target(training_matrix)
-        test_data, test_target = self.matrix_helper.create_data_target(test_matrix)
-
-        # Train SVR Model and predict vulnerrabilities for test data
-        target_prediction, time = self.predict(training_data, training_target, test_data)
-
-        # Create matrix with component names, predicted vulnerabilities and actual number of vulnerabilities in test set
-        compare_matrix = []
-
-        for i in range(len(target_prediction)):
-            compare_matrix.append([test_rows[i], round(float(target_prediction[i])), test_target[i]])
-
-        self.compare_matrix = np.array(compare_matrix)
-        self.compare_matrix_with_deleted = None
-        self.time = time
-
-
     def calculate_semiannual_compare_matrix(self, matrices, validation_matrices):
         '''
         Erstellt eine Vergleichsmatrix fuer zwei verschiedene Revisionen. Mit der feature matrix
