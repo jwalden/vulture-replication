@@ -14,14 +14,23 @@ class PredictionHelper:
         self.time = None
 
     def calculate_validation_compare_matrix(self, matrices, sampling_factor=(2.0/3), prediction_type='SVM', crop_matrix=False):
-        '''
-        Erstellt eine Vergleichsmatrix auf der feature matrix einer einzelnen Revision mit folgenden 3 Spalten:
-        [:, 0] = Name der Komponente
-        [:, 1] = Vorhergesagte Anzahl Verwundbarkeiten aufgrund des Regressionsmodells
-        [:, 2] = Tatsaechliche Anzahl Verwundbarkeiten im Testset
+        """
+        Creates a comparison matrix on a single revision. The feature matrix of
+        this revision is splitted into training and test set by stratified sampling
+        with the given factor.
+        The comparison matrix contains the following 3 columns:
+        [:, 0] = component name
+        [:, 1] = predicted number of vulnerabilities
+        [:, 2] = actual number of vulnerabilities in test set
 
-        Dabei wird die feature matrix mit stratified sampling gemaess dem uebergebenen Faktor in training und test set aufgeteilt.
-        '''
+        :param matrices: A tuple that contains the feature matrix and the row names of all components
+        of a revision, that will be used to predict vulnerabilities.
+        :param sampling_factor: Factor that is used for the stratified sampling.
+        :param prediction_type: Classifier or Regression type.
+        :param crop_matrix: If true, the feature matrix is croped to 1000 samples
+        to reduce the prediction time.
+        :return: None
+        """
         feature_matrix = matrices[0]
         if (crop_matrix):
             feature_matrix = feature_matrix[:1000, :]
@@ -62,16 +71,24 @@ class PredictionHelper:
         self.time = time
 
     def calculate_semiannual_compare_matrix(self, matrices, validation_matrices, prediction_type='SVR'):
-        '''
-        Erstellt eine Vergleichsmatrix fuer zwei verschiedene Revisionen. Mit der feature matrix
-        einer alten Revision wird ein Regressionsmodell angelernt und auf alle Komponenten der selben
-        Revision angewendet, die zu deren Zeitpunkt keine Verwundbarkeiten hatten. In der Vergleichsmatrix
-        werden die vorhergesagten Verwundbarkeiten mit den tatsaechlichen Verwundbarkeiten der gleichen
-        Komponenten zu einer spaeteren Revision verglichen. Die Vergleichsmatrix enthaelt folgende 3 Spalten:
-        [:, 0] = Name der Komponente
-        [:, 1] = Vorhergesagte Anzahl Verwundbarkeiten aufgrund des Regressionsmodells
-        [:, 2] = Tatsaechliche Anzahl Verwundbarkeiten in der spaeteren regression (validation_matrices)
-        '''
+        """
+        Creates a comparison matrix on two different revisions. With the feature
+        matrix of an old revision, a model is fitted and applied to all components
+        of the same revision that had no vulnerabilities at this moment.
+        In the comparison matrix, this predicted vulnerabilities are compared
+        with the actual vulnerabilities of the same components in a later revision.
+        The comparison matrix contains the following 3 columns:
+        [:, 0] = component name
+        [:, 1] = predicted number of vulnerabilities
+        [:, 2] = actual number of vulnerabilities in validation revision
+
+        :param matrices: A tuple that contains the feature matrix and the row names of all components
+        of the first revision, that will be used to predict future vulnerabilities.
+        :param validation_matrices: A tuple that contains the feature matrix and the row names of all components
+        of the validation revision, that will be used for validating the prediciton.
+        :param prediction_type: Classifier or Regression type.
+        :return: None
+        """
         feature_matrix = matrices[0]
         validation_feature_matrix = validation_matrices[0]
         rows = matrices[1]
@@ -103,6 +120,17 @@ class PredictionHelper:
         self.time = time
 
     def predict(self, training_data, training_target, test_data, prediction_type):
+        """
+        Fits an SVM, SVR or a decision tree with the given training data and calculates
+        the prediction for the test data.
+
+        :param training_data: The matrix with that the model is fitted without the target.
+        :param training_target: The target vector with that the model is fitted.
+        :param test_data: The test matrix data for that the prediction is calculated.
+        :param prediction_type: Classifier or Regression type.
+        :return: A target vector with the predicted values and the elapsed time for
+        calculation in seconds.
+        """
         start = time.time()
 
         # Create the SVM or DT
@@ -130,6 +158,15 @@ class PredictionHelper:
         return self.compare_matrix
 
     def get_compare_matrix_sorted(self, with_deleted_components=False):
+        """
+        Sorts the calculated compare matrix according to target prediction value
+        (number of predicted vulnerabilities for each component) and returns it.
+
+        :param with_deleted_components: If true, in the semiannual comparaison
+        are components that were deleted in the later revision, still displayed
+        in the compare matrix.
+        :return: A sorted copy of the compare matrix.
+        """
         if (with_deleted_components and self.compare_matrix_with_deleted is not None):
             sorted_indeces = np.array(self.compare_matrix_with_deleted[:,1], dtype='f').argsort()[::-1]
             return copy.copy(self.compare_matrix_with_deleted[sorted_indeces])
@@ -138,6 +175,15 @@ class PredictionHelper:
         return copy.copy(self.compare_matrix[sorted_indeces])
 
     def get_compare_matrix_top(self, percent=0.01, with_deleted_components=False):
+        """
+        Return a percentage (highest x percent) of the sorted compare matrix.
+
+        :param percent: Percentage of predicted components that will be returned.
+        :param with_deleted_components: If true, in the semiannual comparaison
+        are components that were deleted in the later revision, still displayed
+        in the compare matrix.
+        :return: Highest x percent of the sorted compare matrix.
+        """
         compare_matrix_sorted = self.get_compare_matrix_sorted(with_deleted_components)
         actual_samples_count = len(compare_matrix_sorted[:,0])
         relevant_samples_count = int(round(percent * actual_samples_count))

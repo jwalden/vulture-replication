@@ -3,6 +3,14 @@ import cPickle as pickle
 
 class MatrixHelper:
     def load_from_parse(self, path):
+        """
+        Reads the feature matrix and the associated column and row names from a
+        .pickle file at a given path.
+
+        :param path: Path to the .pickle file that will be read.
+        :return: A tuple that contains the feature matrix and the row and column names.
+        """
+
         matrix = None
         with open(path, 'rb') as f:
             sparse = pickle.load(f)
@@ -18,8 +26,13 @@ class MatrixHelper:
 
     def get_not_vulnerable_components(self, matrix, rows=None):
         """
-        Gibt alle Samples und die zugehoerigen Komponentennamen zurueck, deren
-        vulnerability counter == 0 ist.
+        Returns all samples and the associated component names, whose vulnerability
+        counter is equal 0.
+
+        :param matrix: The feature matrix.
+        :param rows: The vector that conatins alls row or component names.
+        :return: A new matrix, that contains all rows from the orginal, that
+        aren't vulenrable.
         """
 
         not_vulnerable_indices = np.where(matrix[:,-1] == 0)
@@ -34,8 +47,13 @@ class MatrixHelper:
 
     def get_vulnerable_components(self, matrix, rows=None):
         """
-        Gibt alle Samples und die zugehoerigen Komponentennamen zurueck, deren
-        vulnerability counter > 0 ist.
+        Returns all samples and the associated component names, whose vulnerability
+        counter is bigger than 0.
+
+        :param matrix: The feature matrix.
+        :param rows: The vector that conatins alls row or component names.
+        :return: A new matrix, that contains all rows from the orginal, that
+        aren vulenrable.
         """
 
         vulnerable_indices = np.where(matrix[:,-1] > 0)
@@ -50,9 +68,13 @@ class MatrixHelper:
 
     def get_components_without_vulnerabilities(self, matrix, rows):
         """
-        Gibt alle Samples und die zugehoerigen Komponentennamen zurueck, fuer die
-        es KEINEN verwundbaren Eintrag in der Matrix gibt. Einmal Verwundbar,
-        bleibt sie es auch.
+        Returns all samples and the associated component names, for that no
+        vulnerable entry exists in the matrix.
+
+        :param matrix: The feature matrix.
+        :param rows: The vector that conatins alls row or component names.
+        :return: A new matrix, that contains all rows (components) who never were
+        vulnerable.
         """
 
         # Create Array (vulnerable_rows) with the names of all vulnerable components
@@ -73,6 +95,17 @@ class MatrixHelper:
         return (not_vulnerable_matrix, not_vulnerable_rows)
 
     def split_training_test(self, matrix, sampling_factor=(2.0/3), rows=None):
+        """
+        Splits a given matrix into training and test sets, by stratified sampling
+        with the given factor.
+
+        :param matrix: The feature matrix that is splitted.
+        :param sampling_factor: Factor that is used for the stratified sampling.
+        :param rows: Names of the components in the feature matrix.
+        :return: Two tuples, each containing the matrix and component names of
+        the training or test set.
+        """
+
         samples_count = matrix.shape[0]
 
         random_indices = np.random.choice(samples_count, int(samples_count * sampling_factor), replace=False)
@@ -90,6 +123,14 @@ class MatrixHelper:
         return (training_matrix, training_rows), (test_matrix, test_rows)
 
     def create_data_target(self, matrix):
+        """
+        Splits a given matrix into the data matrix and the target vector.
+
+        :param matrix: The feature matrix that is splitted.
+        :return: The feature matrix without the last column and the last
+        column as a single vector.
+        """
+
         features_count = matrix.shape[1] - 1
 
         data = matrix[:, range(features_count)]
@@ -97,4 +138,11 @@ class MatrixHelper:
         return data, target
 
     def get_vulnerable_percentage(self, matrix):
+        """
+        Calculates the percentage of vulnerable components in a given matric.
+
+        :param matrix: The matrix for that the percentage is calculated.
+        :return: Percentage of vulnerable components as an Integer.
+        """
+
         return (matrix[matrix > 0]).size * 100.0 / matrix.size
