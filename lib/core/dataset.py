@@ -46,9 +46,9 @@ class DataSetBuilder:
                 if include in self.index['index'][component]['includes'][self.max_node][1]:
                     matrix[i, j] = 1
             if is_regression:
-                matrix[i, -1] = len(self.index['index'][component]['fixes'])
+                matrix[i, -1] = len(self.index['index'][component]['bugs'].keys())
             else:
-                matrix[i, -1] = 1 if len(self.index['index'][component]['fixes']) > 0 else 0
+                matrix[i, -1] = 1 if len(self.index['index'][component]['bugs'].keys()) > 0 else 0
 
         return matrix, rows, columns
 
@@ -109,19 +109,28 @@ class DataSetBuilder:
             component_indices = []
             for include in data['includes'][self.max_node][1]:
                 component_indices.append(columns.index(include))
-            vuln_count = len(data['fixes'])
+            vuln_count = len(data['bugs'].keys())
             indices[component].append((vuln_count, component_indices))
 
-            fix_nodes = self.vcs.sort_nodes_asc(data['fixes'])
-            vuln_count = 0
-            for node in fix_nodes:
-                if node in data['includes'].keys() and data['includes'][node][0] == 'o':
-                    component_indices = []
-                    for include in data['includes'][node][1]:
-                        component_indices.append(columns.index(include))
-                    indices[component].append((vuln_count, component_indices))
+            fix_nodes = self.vcs.sort_nodes_asc(chain.from_iterable(data['bugs'].values()))
+            if len(fix_nodes) > 0:
+                node_bugs = {}
+                for bug, nodes in data['bugs'].items():
+                    for node in nodes:
+                        node_bugs[node] = bug
 
-                vuln_count += 1
+                encountered_bugs = [node_bugs[fix_nodes[0]]]
+                vuln_count = 0
+                for node in fix_nodes:
+                    if node in data['includes'].keys() and data['includes'][node][0] == 'o':
+                        component_indices = []
+                        for include in data['includes'][node][1]:
+                            component_indices.append(columns.index(include))
+                        indices[component].append((vuln_count, component_indices))
+
+                    if not node_bugs[node] in encountered_bugs:
+                        vuln_count += 1
+                        encountered_bugs.append(node_bugs[node])
 
         matrix = self.__assign_index_values(indices, rows, matrix)
 
