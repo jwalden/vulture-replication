@@ -63,7 +63,7 @@ class Components:
                         components[component] = {
                             'files': [file_path],
                             'includes': {},
-                            'fixes': set()
+                            'bugs': {}
                         }
                     else:
                         components[component]['files'].append(file_path)
@@ -81,18 +81,22 @@ class Components:
         """
         log.info('Adding fixing nodes to components')
 
-        for node, files in file_index.items():
-            node_date = self.vcs.node_to_date(node)
-            if self.max_node_date >= node_date:
-                log.debug('Node date is valid, including: {} (max {})'.format(node_date, self.max_node_date))
-                for f in files:
-                    component = self.parse_component_name(f)
-                    if component is None:
-                        continue
-                    if component in self.index['index'].keys():
-                        self.index['index'][component]['fixes'].add(node)
-                    else:
-                        log.warn('Component {} is not in component index'.format(component))
+        for bug, nodes in file_index.items():
+            for node, files in nodes.items():
+                node_date = self.vcs.node_to_date(node)
+                if self.max_node_date >= node_date:
+                    log.debug('Node date is valid, including: {} (max {})'.format(node_date, self.max_node_date))
+                    for f in files:
+                        component = self.parse_component_name(f)
+                        if component is None:
+                            continue
+                        if component in self.index['index'].keys():
+                            if bug in self.index['index'][component]['bugs'].keys():
+                                self.index['index'][component]['bugs'][bug].add(node)
+                            else:
+                                self.index['index'][component]['bugs'][bug] = set([node])
+                        else:
+                            log.warn('Component {} is not in component index'.format(component))
 
         self.fixes_added = True
         return self.index
@@ -150,22 +154,23 @@ class Components:
 
         for component, data in self.index['index'].items():
             files = [os.path.join(f[0], f[1]) for f in data['files']]
-            for node in data['fixes']:
-                fetch_node = self.vcs.fetch_precursor_node(node)
-                log.debug('Fetching includes for component {} in {}'.format(component, node))
+            for bug, nodes in data['bugs'].items():
+                for node in nodes:
+                    fetch_node = self.vcs.fetch_precursor_node(node)
+                    log.debug('Fetching includes for component {} in {}'.format(component, node))
 
-                includes = set()
-                for content in self.vcs.fetch_node_contents(files, fetch_node):
-                    includes.update(self._parse_includes(content))
+                    includes = set()
+                    for content in self.vcs.fetch_node_contents(files, fetch_node):
+                        includes.update(self._parse_includes(content))
 
-                if len(includes) > 0:
-                    flag = 'o'
-                    if includes in [i[1] for i in self.index['index'][component]['includes'].values()]:
-                        flag = 'd'
-                    log.info('Adding ({}) includes for {} in {}'.format(flag, component, node))
-                    self.index['index'][component]['includes'][node] = (flag, includes)
-                else:
-                    log.error('Got empty include set for {} in {}'.format(component, node))
+                    if len(includes) > 0:
+                        flag = 'o'
+                        if includes in [i[1] for i in self.index['index'][component]['includes'].values()]:
+                            flag = 'd'
+                        log.info('Adding ({}) includes for {} in {}'.format(flag, component, node))
+                        self.index['index'][component]['includes'][node] = (flag, includes)
+                    else:
+                        log.error('Got empty include set for {} in {}'.format(component, node))
 
         self.index['meta']['has_history'] = True
 

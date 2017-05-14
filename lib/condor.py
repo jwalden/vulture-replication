@@ -74,8 +74,8 @@ class Condor:
         print('index version:          {}'.format(meta['version']))
         print('')
         print('components:             {}'.format(len(data.keys())))
-        print('components vulnerable:  {}'.format(sum(1 if len(c['fixes']) > 0 else 0 for c in data.values())))
-        print('vulnerabilities:        {}'.format(sum(len(c['fixes']) for c in data.values())))
+        print('components vulnerable:  {}'.format(sum(1 if len(c['bugs'].keys()) > 0 else 0 for c in data.values())))
+        print('vulnerabilities:        {}'.format(sum(len(c['bugs'].keys()) for c in data.values())))
         print('distinct includes:      {}'.format(
             len(set(chain.from_iterable(
                 [incl[1] for incl in chain.from_iterable([c['includes'].values() for c in data.values()])])))

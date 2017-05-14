@@ -70,4 +70,12 @@ class Miner(object):
         """
         log.info('Creating file index, VCS type is {}'.format(type(self.vcs)))
         nodes = set(chain.from_iterable(node_index.values()))
-        return self.vcs.fetch_modified_files(nodes)
+        files = self.vcs.fetch_modified_files(nodes)
+
+        file_index = {k: {} for k in node_index.keys()}
+        for bug, nodes in node_index.items():
+            for node in nodes:
+                file_index[bug][node] = files[node]
+
+        return file_index
+

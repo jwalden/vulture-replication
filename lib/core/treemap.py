@@ -69,7 +69,7 @@ class TreeMap:
                     node = (
                         path[self.slice:],
                         component,
-                        len(self.index['index'][component]['fixes']),
+                        len(self.index['index'][component]['bugs'].keys()),
                         sizes[component]
                         )
                     nodes.append(node)
