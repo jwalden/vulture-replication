@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+from itertools import chain
 
 
 from lib.core.exceptions import NodeMismatchException, MissingFixesException
@@ -154,23 +155,22 @@ class Components:
 
         for component, data in self.index['index'].items():
             files = [os.path.join(f[0], f[1]) for f in data['files']]
-            for bug, nodes in data['bugs'].items():
-                for node in nodes:
-                    fetch_node = self.vcs.fetch_precursor_node(node)
-                    log.debug('Fetching includes for component {} in {}'.format(component, node))
+            for node in reversed(self.vcs.sort_nodes_asc(chain.from_iterable(data['bugs'].values()))):
+                fetch_node = self.vcs.fetch_precursor_node(node)
+                log.debug('Fetching includes for component {} in {}'.format(component, node))
 
-                    includes = set()
-                    for content in self.vcs.fetch_node_contents(files, fetch_node):
-                        includes.update(self._parse_includes(content))
+                includes = set()
+                for content in self.vcs.fetch_node_contents(files, fetch_node):
+                    includes.update(self._parse_includes(content))
 
-                    if len(includes) > 0:
-                        flag = 'o'
-                        if includes in [i[1] for i in self.index['index'][component]['includes'].values()]:
-                            flag = 'd'
-                        log.info('Adding ({}) includes for {} in {}'.format(flag, component, node))
-                        self.index['index'][component]['includes'][node] = (flag, includes)
-                    else:
-                        log.error('Got empty include set for {} in {}'.format(component, node))
+                if len(includes) > 0:
+                    flag = 'o'
+                    if includes in [i[1] for i in self.index['index'][component]['includes'].values()]:
+                        flag = 'd'
+                    log.info('Adding ({}) includes for {} in {}'.format(flag, component, node))
+                    self.index['index'][component]['includes'][node] = (flag, includes)
+                else:
+                    log.error('Got empty include set for {} in {}'.format(component, node))
 
         self.index['meta']['has_history'] = True
 
