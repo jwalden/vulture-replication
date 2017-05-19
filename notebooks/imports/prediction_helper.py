@@ -12,6 +12,8 @@ class PredictionHelper:
         self.matrix_helper = MatrixHelper()
         self.compare_matrix = None
         self.time = None
+        self.most_important_feature_index = None
+        self.most_important_feature = None
 
     def calculate_validation_compare_matrix(self, matrices, sampling_factor=(2.0/3), prediction_type='SVM', crop_matrix=False):
         """
@@ -35,6 +37,7 @@ class PredictionHelper:
         if (crop_matrix):
             feature_matrix = feature_matrix[:1000, :]
         rows = matrices[1]
+        columns = matrices[2]
         features_count = feature_matrix.shape[1] - 1
 
         # Create own matrices for vulenrable and not vulnerable entries
@@ -60,6 +63,9 @@ class PredictionHelper:
 
         # Train the classification model and predict vulnerrabilities for test data
         target_prediction, time = self.predict(training_data, training_target, test_data, prediction_type)
+
+        if self.most_important_feature_index is not None:
+            self.most_important_feature = columns[self.most_important_feature_index]
 
         # Create matrix with component names, predicted vulnerabilities and actual number of vulnerabilities in test set
         compare_matrix = []
@@ -149,6 +155,9 @@ class PredictionHelper:
 
         end = time.time()
         elapsed = (end - start) / 60
+
+        if (prediction_type == 'DT'):
+            self.most_important_feature_index = m.tree_.feature[0]
 
         return target_prediction, elapsed
 
