@@ -76,7 +76,7 @@ class PredictionHelper:
         self.compare_matrix = np.array(compare_matrix)
         self.time = time
 
-    def calculate_semiannual_compare_matrix(self, matrices, validation_matrices, prediction_type='SVR'):
+    def calculate_semiannual_compare_matrix(self, matrices, validation_matrices, prediction_type='LinearSVC'):
         """
         Creates a comparison matrix on two different revisions. With the feature
         matrix of an old revision, a model is fitted and applied to all components
@@ -142,6 +142,8 @@ class PredictionHelper:
         # Create the SVM or DT
         if (prediction_type == 'SVM'):
             m = svm.SVC(kernel='linear', C=0.2)
+        elif (prediction_type == 'LinearSVC'):
+            m = svm.LinearSVC(C=0.2)
         elif (prediction_type == 'DT'):
             m = tree.DecisionTreeClassifier()
         else:
