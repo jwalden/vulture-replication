@@ -12,6 +12,8 @@ class PredictionHelper:
         self.matrix_helper = MatrixHelper()
         self.compare_matrix = None
         self.time = None
+        self.most_important_feature_index = None
+        self.most_important_feature = None
 
     def calculate_validation_compare_matrix(self, matrices, sampling_factor=(2.0/3), prediction_type='SVM', crop_matrix=False):
         """
@@ -35,6 +37,7 @@ class PredictionHelper:
         if (crop_matrix):
             feature_matrix = feature_matrix[:1000, :]
         rows = matrices[1]
+        columns = matrices[2]
         features_count = feature_matrix.shape[1] - 1
 
         # Create own matrices for vulenrable and not vulnerable entries
@@ -61,6 +64,9 @@ class PredictionHelper:
         # Train the classification model and predict vulnerrabilities for test data
         target_prediction, time = self.predict(training_data, training_target, test_data, prediction_type)
 
+        if self.most_important_feature_index is not None:
+            self.most_important_feature = columns[self.most_important_feature_index]
+
         # Create matrix with component names, predicted vulnerabilities and actual number of vulnerabilities in test set
         compare_matrix = []
 
@@ -70,7 +76,7 @@ class PredictionHelper:
         self.compare_matrix = np.array(compare_matrix)
         self.time = time
 
-    def calculate_semiannual_compare_matrix(self, matrices, validation_matrices, prediction_type='SVR'):
+    def calculate_semiannual_compare_matrix(self, matrices, validation_matrices, prediction_type='LinearSVC'):
         """
         Creates a comparison matrix on two different revisions. With the feature
         matrix of an old revision, a model is fitted and applied to all components
@@ -136,6 +142,8 @@ class PredictionHelper:
         # Create the SVM or DT
         if (prediction_type == 'SVM'):
             m = svm.SVC(kernel='linear', C=0.2)
+        elif (prediction_type == 'LinearSVC'):
+            m = svm.LinearSVC(C=0.2)
         elif (prediction_type == 'DT'):
             m = tree.DecisionTreeClassifier()
         else:
@@ -149,6 +157,9 @@ class PredictionHelper:
 
         end = time.time()
         elapsed = (end - start) / 60
+
+        if (prediction_type == 'DT'):
+            self.most_important_feature_index = m.tree_.feature[0]
 
         return target_prediction, elapsed
 
