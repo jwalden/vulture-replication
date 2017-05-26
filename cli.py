@@ -74,6 +74,8 @@ flags.add_argument('-s', '--source', type=str, choices=('mozilla', 'aosp'),
                    help='source (project) to use')
 flags.add_argument('-r', '--repo', metavar='path', type=str,
                    help='path to the local repository clone of the specified source')
+flags.add_argument('-f', '--feature', choices=('includes', 'calls', 'conditionals', 'defines', 'namespaces'),
+                   help='the feature to use for building the data set, \'includes\' by default')
 
 
 args = vars(parser.parse_args())
@@ -128,7 +130,8 @@ if args['build_date_components']:
 
 if args['build_dataset']:
     argvars = args['build_dataset']
-    condor.build_data_set(argvars[0], argvars[1], argvars[2], argvars[3])
+    feature = args['feature'] if args['feature'] is not None else 'includes'
+    condor.build_data_set(argvars[0], argvars[1], argvars[2], argvars[3], feature)
 
 if args['build_semiannual']:
     argvars = args['build_semiannual']

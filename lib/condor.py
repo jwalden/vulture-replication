@@ -73,9 +73,11 @@ class Condor:
         print('contains history:       {}'.format(meta['has_history']))
         print('index version:          {}'.format(meta['version']))
         print('')
+        print('files:                  {}'.format(len(list(chain.from_iterable([d['files'] for d in data.values()])))))
         print('components:             {}'.format(len(data.keys())))
         print('components vulnerable:  {}'.format(sum(1 if len(c['bugs'].keys()) > 0 else 0 for c in data.values())))
         print('vulnerabilities:        {}'.format(sum(len(c['bugs'].keys()) for c in data.values())))
+        #print('changes (commits):      {}'.format(sum([len(c['bugs'].values()) for c in data.values()])))
         print('distinct includes:      {}'.format(
             len(set(chain.from_iterable(
                 [incl[1] for incl in chain.from_iterable([c['includes'].values() for c in data.values()])])))
@@ -201,11 +203,19 @@ class Condor:
         components.add_vulnerability_fixes(serialize.read(self.file_index_path))
         print('fetching includes from file system')
         components.fetch_includes_fs()
+        print('fetching function calls from file system')
+        components.fetch_calls_fs()
+        print('fetching preprocessing conditionals from file system')
+        components.fetch_conditionals_fs()
+        print('fetching preprocessing defines from file system')
+        components.fetch_defines_fs()
+        print('fetching namespaces from file system')
+        components.fetch_namespaces_fs()
         if exclude_history:
-            print('not including includes from history')
+            print('not including features from history')
         else:
-            print('fetching includes from history')
-            components.fetch_includes_node()
+            print('fetching features from history')
+            components.fetch_features_node()
         index = components.index
 
         serialize.persist(index, save_path)
@@ -216,7 +226,7 @@ class Condor:
         print('done')
 
     @timeit
-    def build_data_set(self, read_path, save_path, target_type, period):
+    def build_data_set(self, read_path, save_path, target_type, period, feature):
         """
         Build the machine learning data set.
         
@@ -226,7 +236,7 @@ class Condor:
         :param period: Either 'history' for consideration of history includes or 'current'.
         :return: None
         """
-        print('building data set from component index {}'.format(read_path))
+        print('building {} data set from component index {}'.format(feature, read_path))
         print('the data set will be saved at {}'.format(save_path))
 
         is_regression = (target_type == 'r')
@@ -246,14 +256,14 @@ class Condor:
             print('including history in data set')
             try:
                 if is_regression:
-                    data_set = builder.from_history_regression()
+                    data_set = builder.from_history_regression(feature=feature)
                 else:
-                    data_set = builder.from_history_classification()
+                    data_set = builder.from_history_classification(feature=feature)
             except MissingHistoryException:
                 print('ERROR: there is no revision history in the components data structure')
                 exit(1)
         else:
-            data_set = builder.from_current(is_regression)
+            data_set = builder.from_current(feature=feature, is_regression=is_regression)
 
         sparse = builder.to_sparse(data_set)
         serialize.persist(sparse, save_path)
@@ -270,6 +280,8 @@ class Condor:
         :return: None
         """
         print('building semiannual matrices from component index')
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
         print('the data sets will be saved at {}'.format(save_dir))
 
         file_index = read_or_exit(self.file_index_path)
@@ -295,15 +307,31 @@ class Condor:
 
             print('building component index for date {} ({})'.format(date, matrix_date))
             components_path = os.path.join(save_dir, 'components_{}.pickle'.format(date))
-            regression_path = os.path.join(save_dir, 'matrix_regression_{}.pickle'.format(date))
-            classification_path = os.path.join(save_dir, 'matrix_classification_{}.pickle'.format(date))
+            regression = {
+                'includes': os.path.join(save_dir, 'matrix_reg_incl_{}.pickle'.format(date)),
+                #'calls': os.path.join(save_dir, 'matrix_reg_calls_{}.pickle'.format(date)),
+                'conditionals': os.path.join(save_dir, 'matrix_reg_cond_{}.pickle'.format(date)),
+                'defines': os.path.join(save_dir, 'matrix_reg_defs_{}.pickle'.format(date)),
+                'namespaces': os.path.join(save_dir, 'matrix_reg_names_{}.pickle'.format(date))
+            }
+            classification = {
+                'includes': os.path.join(save_dir, 'matrix_cla_incl_{}.pickle'.format(date)),
+                #'calls': os.path.join(save_dir, 'matrix_cla_calls_{}.pickle'.format(date)),
+                'conditionals': os.path.join(save_dir, 'matrix_cla_cond_{}.pickle'.format(date)),
+                'defines': os.path.join(save_dir, 'matrix_cla_defs_{}.pickle'.format(date)),
+                'namespaces': os.path.join(save_dir, 'matrix_cla_names_{}.pickle'.format(date))
+            }
 
             if not os.path.exists(components_path):
                 components = Components(self.vcs, self.repo_path, self.source_id, max_node=node)
                 components.create_component_index()
                 components.add_vulnerability_fixes(file_index)
                 components.fetch_includes_fs()
-                components.fetch_includes_node()
+                components.fetch_calls_fs()
+                components.fetch_conditionals_fs()
+                components.fetch_defines_fs()
+                components.fetch_namespaces_fs()
+                components.fetch_features_node()
                 serialize.persist(components.index, components_path)
                 components_index = components.index
             else:
@@ -311,15 +339,20 @@ class Condor:
                 components_index = serialize.read(components_path)
 
             builder = DataSetBuilder(self.vcs, components_index, self.source_id)
-            print('building regression data set')
-            if not os.path.exists(regression_path):
-                data_set = builder.to_sparse(builder.from_history_regression())
-                serialize.persist(data_set, regression_path)
+            print('building regression data sets')
+            for feature, path in regression.items():
+                print(feature)
+                if not os.path.exists(path):
+                    data_set = builder.to_sparse(builder.from_history_regression(feature=feature))
+                    # data_set = builder.to_sparse(builder.from_current(is_regression=True))
+                    serialize.persist(data_set, path)
 
-            print('building classification data set')
-            if not os.path.exists(classification_path):
-                data_set = builder.to_sparse(builder.from_history_classification())
-                serialize.persist(data_set, classification_path)
+            print('building classification data sets')
+            for feature, path in classification.items():
+                print(feature)
+                if not os.path.exists(path):
+                    data_set = builder.to_sparse(builder.from_history_classification(feature=feature))
+                    serialize.persist(data_set, path)
             print('')
 
     @staticmethod

@@ -26,24 +26,25 @@ class DataSetBuilder:
         if self.index['meta']['source_id'] != source_id:
             raise SourceMismatchException('specified source and index source do not match')
 
-    def from_current(self, is_regression=True):
+    def from_current(self, feature='includes', is_regression=True):
         """
         Builds the data set from the includes for which the component index was built, excluding ones from earlier
         nodes. The last column in the feature matrix represents the target vector.
         
+        :param feature: Dictionary key of the feature to use for the matrix.
         :param is_regression: Regression matrix if True, classification otherwise.
         :return: A tuple: (feature matrix, list of row names, list of column names)
         """
         log.info('Building data set from the most recent node in the component index')
         log.debug('Creating columns, rows and empty matrix')
-        columns = list(set(chain.from_iterable([c['includes'][self.max_node][1] for c in self.index['index'].values()])))
+        columns = list(set(chain.from_iterable([c[feature][self.max_node][1] for c in self.index['index'].values()])))
         rows = self.index['index'].keys()
         matrix = np.zeros((len(rows), len(columns) + 1), dtype=np.uint8)
 
         log.debug('Populating matrix with include and target values')
         for i, component in enumerate(rows):
             for j, include in enumerate(columns):
-                if include in self.index['index'][component]['includes'][self.max_node][1]:
+                if include in self.index['index'][component][feature][self.max_node][1]:
                     matrix[i, j] = 1
             if is_regression:
                 matrix[i, -1] = len(self.index['index'][component]['bugs'].keys())
@@ -52,7 +53,7 @@ class DataSetBuilder:
 
         return matrix, rows, columns
 
-    def from_history_classification(self):
+    def from_history_classification(self, feature='includes'):
         """
         Builds the classification data set with includes from earlier nodes. The last column in the feature matrix
         represents the target vector.
@@ -63,28 +64,31 @@ class DataSetBuilder:
         self._assert_history()
 
         log.debug('Creating columns, rows and empty matrix')
-        # Columns: Create a set of all includes of all components, convert it to a list so it is ordered
+        # Columns: Create a set of all features of all components, convert it to a list so it is ordered
         columns = list(set(chain.from_iterable(
-            [incl[1] for incl in chain.from_iterable([c['includes'].values() for c in self.index['index'].values()])])))
+            [incl[1] for incl in chain.from_iterable([c[feature].values() for c in self.index['index'].values()])])))
         # Rows: Repeat the component name for each include set of the component
-        rows = [c[0] for c in self.index['index'].items() for incl in c[1]['includes'].keys()]
+        #rows = [c[0] for c in self.index['index'].items() for incl in c[1][feature].keys()]
+        rows = [c[0] for c in self.index['index'].items() for i in c[1][feature].keys() if
+                c[1][feature][i][0] == 'o']
         matrix = np.zeros((len(rows), len(columns) + 1), dtype=np.uint8)
 
         log.debug('Fetching matrix indices for each include set of each component')
         indices = {component: [] for component in self.index['index'].keys()}
         for component, data in self.index['index'].items():
-            for node, includes in data['includes'].items():
-                component_indices = []
-                for include in includes[1]:
-                    component_indices.append(columns.index(include))
-                target = 1 if node is not self.max_node else 0
-                indices[component].append((target, component_indices))
+            for node, features in data[feature].items():
+                if features[0] == 'o':
+                    component_indices = []
+                    for f in features[1]:
+                        component_indices.append(columns.index(f))
+                    target = 1 if node is not self.max_node else 0
+                    indices[component].append((target, component_indices))
 
         matrix = self.__assign_index_values(indices, rows, matrix)
 
         return matrix, rows, columns
 
-    def from_history_regression(self):
+    def from_history_regression(self, feature='includes'):
         """
         Builds the regression data set with includes from earlier nodes. The last column in the feature matrix
         represents the target vector.
@@ -95,19 +99,19 @@ class DataSetBuilder:
         self._assert_history()
 
         log.debug('Creating columns, rows and empty matrix')
-        # Columns: Create a set of all includes of all components, convert it to a list so it is ordered
+        # Columns: Create a set of all features of all components, convert it to a list so it is ordered
         columns = list(set(chain.from_iterable(
-            [incl[1] for incl in chain.from_iterable([c['includes'].values() for c in self.index['index'].values()])])))
+            [incl[1] for incl in chain.from_iterable([c[feature].values() for c in self.index['index'].values()])])))
         # Rows: Repeat the component name for each _distinct_ include set of the component (omit duplicates)
-        rows = [c[0] for c in self.index['index'].items() for i in c[1]['includes'].keys() if
-                c[1]['includes'][i][0] == 'o']
+        rows = [c[0] for c in self.index['index'].items() for i in c[1][feature].keys() if
+                c[1][feature][i][0] == 'o']
         matrix = np.zeros((len(rows), len(columns) + 1), dtype=np.uint8)
 
         log.debug('Fetching matrix indices for each include set of each component')
         indices = {component: [] for component in self.index['index'].keys()}
         for component, data in self.index['index'].items():
             component_indices = []
-            for include in data['includes'][self.max_node][1]:
+            for include in data[feature][self.max_node][1]:
                 component_indices.append(columns.index(include))
             vuln_count = len(data['bugs'].keys())
             indices[component].append((vuln_count, component_indices))
@@ -122,9 +126,9 @@ class DataSetBuilder:
                 encountered_bugs = [node_bugs[fix_nodes[0]]]
                 vuln_count = 0
                 for node in fix_nodes:
-                    if node in data['includes'].keys() and data['includes'][node][0] == 'o':
+                    if node in data[feature].keys() and data[feature][node][0] == 'o':
                         component_indices = []
-                        for include in data['includes'][node][1]:
+                        for include in data[feature][node][1]:
                             component_indices.append(columns.index(include))
                         indices[component].append((vuln_count, component_indices))
 
@@ -144,7 +148,11 @@ class DataSetBuilder:
     def __assign_index_values(indices, rows, matrix):
         log.debug('Assigning matrix values at previously fetched indices')
         for i, component in enumerate(rows):
-            target, component_indices = indices[component].pop()
+            try:
+                target, component_indices = indices[component].pop()
+            except IndexError:
+                print('{}: {}'.format(component, indices[component]))
+                raise
             for j in component_indices:
                 matrix[i, j] = 1
             matrix[i, -1] = target

@@ -2,6 +2,7 @@ import time
 import logging
 import datetime
 import os
+import numpy as np
 from functools import wraps
 from pprint import pprint
 
@@ -92,3 +93,15 @@ def count_files(root_dir, extensions):
 
     log.info('Found {} files with extensions {}'.format(count, extensions))
     return count
+
+
+def print_features(dataset, component):
+    i = dataset[1].index(component)
+    while True:
+        print('Vulnerabilities: {}'.format(dataset[0][i, -1]))
+        for f in np.where(dataset[0][i, :-1] == 1)[0].tolist():
+            print(dataset[2][f])
+        print('')
+        i += 1
+        if dataset[1][i] != component:
+            break
