@@ -95,6 +95,6 @@ class TreeMap:
         :return: The component name or None if the file extension is invalid.
         """
         name, ext = os.path.splitext(os.path.split(filename)[-1])
-        if ext.lower() in ['.c', '.cpp', '.h']:
+        if ext.lower() in ['.c', '.cpp', '.cc', '.h']:
             return name
         return None
