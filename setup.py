@@ -8,7 +8,8 @@ requires = [
     'matplotlib',
     'python-hglib',
     'requests',
-    'bs4'
+    'bs4',
+    'prettytable'
 ]
 
 setup(name='vulture-replication',

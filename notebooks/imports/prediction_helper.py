@@ -15,7 +15,7 @@ class PredictionHelper:
         self.most_important_feature_index = None
         self.most_important_feature = None
 
-    def calculate_validation_compare_matrix(self, matrices, sampling_factor=(2.0/3), prediction_type='SVM', crop_matrix=False):
+    def calculate_validation_compare_matrix(self, matrices, sampling_factor=(2.0/3), model_type='SVM', crop_matrix=-1, penalty=1.0):
         """
         Creates a comparison matrix on a single revision. The feature matrix of
         this revision is splitted into training and test set by stratified sampling
@@ -28,14 +28,15 @@ class PredictionHelper:
         :param matrices: A tuple that contains the feature matrix and the row names of all components
         of a revision, that will be used to predict vulnerabilities.
         :param sampling_factor: Factor that is used for the stratified sampling.
-        :param prediction_type: Classifier or Regression type.
-        :param crop_matrix: If true, the feature matrix is croped to 1000 samples
-        to reduce the prediction time.
+        :param model_type: Classifier or Regression type.
+        :param crop_matrix: If value is set, the feature matrix is croped to the number of given samples
+        to reduce the fitting time.
+        :param penalty: Penalty parameter C for the classification model.
         :return: None
         """
         feature_matrix = matrices[0]
-        if (crop_matrix):
-            feature_matrix = feature_matrix[:1000, :]
+        if (crop_matrix >= 0 and crop_matrix < feature_matrix.shape[0]):
+            feature_matrix = feature_matrix[:crop_matrix, :]
         rows = matrices[1]
         columns = matrices[2]
         features_count = feature_matrix.shape[1] - 1
@@ -62,7 +63,7 @@ class PredictionHelper:
 
 
         # Train the classification model and predict vulnerrabilities for test data
-        target_prediction, time = self.predict(training_data, training_target, test_data, prediction_type)
+        target_prediction, time = self.predict(training_data, training_target, test_data, model_type, penalty)
 
         if self.most_important_feature_index is not None:
             self.most_important_feature = columns[self.most_important_feature_index]
@@ -76,7 +77,7 @@ class PredictionHelper:
         self.compare_matrix = np.array(compare_matrix)
         self.time = time
 
-    def calculate_semiannual_compare_matrix(self, matrices, validation_matrices, prediction_type='LinearSVC'):
+    def calculate_semiannual_compare_matrix(self, matrices, validation_matrices, model_type='LinearSVC', penalty=1.0):
         """
         Creates a comparison matrix on two different revisions. With the feature
         matrix of an old revision, a model is fitted and applied to all components
@@ -92,7 +93,8 @@ class PredictionHelper:
         of the first revision, that will be used to predict future vulnerabilities.
         :param validation_matrices: A tuple that contains the feature matrix and the row names of all components
         of the validation revision, that will be used for validating the prediciton.
-        :param prediction_type: Classifier or Regression type.
+        :param model_type: Classifier or Regression type.
+        :param penalty: Penalty parameter C for the classification model.
         :return: None
         """
         feature_matrix = matrices[0]
@@ -108,7 +110,7 @@ class PredictionHelper:
         training_data, training_target = self.matrix_helper.create_data_target(feature_matrix)
 
         # Train SVR Model and predict vulnerrabilities for all components without any vulnerabilities
-        target_prediction, time = self.predict(training_data, training_target, not_vulnerable_matrix[:, range(features_count)], prediction_type)
+        target_prediction, time = self.predict(training_data, training_target, not_vulnerable_matrix[:, range(features_count)], model_type, penalty)
 
         # Create matrix with component names, predicted vulnerabilities and actual number of vulnerabilities in validation revision
         compare_matrix = []
@@ -125,7 +127,7 @@ class PredictionHelper:
         self.compare_matrix_with_deleted = np.array(compare_matrix_with_deleted)
         self.time = time
 
-    def predict(self, training_data, training_target, test_data, prediction_type):
+    def predict(self, training_data, training_target, test_data, model_type, penalty):
         """
         Fits an SVM, SVR or a decision tree with the given training data and calculates
         the prediction for the test data.
@@ -133,32 +135,33 @@ class PredictionHelper:
         :param training_data: The matrix with that the model is fitted without the target.
         :param training_target: The target vector with that the model is fitted.
         :param test_data: The test matrix data for that the prediction is calculated.
-        :param prediction_type: Classifier or Regression type.
+        :param model_type: Classifier or Regression type.
+        :param penalty: Penalty parameter C for the classification model.
         :return: A target vector with the predicted values and the elapsed time for
         calculation in seconds.
         """
         start = time.time()
 
         # Create the SVM or DT
-        if (prediction_type == 'SVM'):
-            m = svm.SVC(kernel='linear', C=0.2)
-        elif (prediction_type == 'LinearSVC'):
-            m = svm.LinearSVC(C=0.2)
-        elif (prediction_type == 'DT'):
+        if (model_type == 'SVM'):
+            m = svm.SVC(kernel='linear', C=penalty)
+        elif (model_type == 'LinearSVC'):
+            m = svm.LinearSVC(C=penalty)
+        elif (model_type == 'DT'):
             m = tree.DecisionTreeClassifier()
         else:
-            m = svm.LinearSVR(C=0.2)
+            m = svm.LinearSVR(C=penalty)
 
-        # Fit prediction_type to the model
+        # Fit data to the model
         m.fit(training_data, training_target)
-
-        # Predict remaining data
-        target_prediction = m.predict(test_data)
 
         end = time.time()
         elapsed = (end - start) / 60
 
-        if (prediction_type == 'DT'):
+        # Predict remaining data
+        target_prediction = m.predict(test_data)
+
+        if (model_type == 'DT'):
             self.most_important_feature_index = m.tree_.feature[0]
 
         return target_prediction, elapsed
@@ -168,7 +171,7 @@ class PredictionHelper:
             return self.compare_matrix_with_deleted
         return self.compare_matrix
 
-    def get_compare_matrix_sorted(self, with_deleted_components=False):
+    def get_compare_matrix_sorted(self, reference_column=1, with_deleted_components=False):
         """
         Sorts the calculated compare matrix according to target prediction value
         (number of predicted vulnerabilities for each component) and returns it.
@@ -179,10 +182,10 @@ class PredictionHelper:
         :return: A sorted copy of the compare matrix.
         """
         if (with_deleted_components and self.compare_matrix_with_deleted is not None):
-            sorted_indeces = np.array(self.compare_matrix_with_deleted[:,1], dtype='f').argsort()[::-1]
+            sorted_indeces = np.array(self.compare_matrix_with_deleted[:,reference_column], dtype='f').argsort()[::-1]
             return copy.copy(self.compare_matrix_with_deleted[sorted_indeces])
 
-        sorted_indeces = np.array(self.compare_matrix[:,1], dtype='f').argsort()[::-1]
+        sorted_indeces = np.array(self.compare_matrix[:,reference_column], dtype='f').argsort()[::-1]
         return copy.copy(self.compare_matrix[sorted_indeces])
 
     def get_compare_matrix_top(self, percent=0.01, with_deleted_components=False):
