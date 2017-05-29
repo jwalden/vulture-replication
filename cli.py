@@ -39,6 +39,8 @@ general.add_argument('--treemap', metavar=('read_path', 'save_path'), type=str, 
                           'save_path.')
 general.add_argument('-p', '--print', metavar='path', type=str,
                      help='pretty print a pickled data structure')
+general.add_argument('--path-replace', metavar='index_path', type=str,
+                     help='replace the repository root path in the specified component index')
 
 mining = parser.add_argument_group('mining', 'arguments for source specific mining')
 mining.add_argument('--scrape', action='store_true',
@@ -105,6 +107,9 @@ if args['checkout']:
 
 if args['treemap']:
     condor.generate_treemap(args['treemap'][0], args['treemap'][1])
+
+if args['path_replace']:
+    condor.path_replace(args['path_replace'])
 
 if args['scrape']:
     condor.scrape()

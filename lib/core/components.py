@@ -20,7 +20,7 @@ class Components:
                               re.MULTILINE)
     KEYWORDS = ['defined', 'if', 'while', 'for', 'namespace']
     DEFAULT_EXT = ['.c', '.cpp', '.cc', '.h']
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self, vcs, repo_path, source_id, max_node=None, extensions=None):
         """
@@ -44,7 +44,8 @@ class Components:
                 'has_history': False,
                 'source_id': source_id,
                 'node': self.max_node,
-                'version': self.VERSION
+                'version': self.VERSION,
+                'repo_path': repo_path
             },
 
             'index': {}

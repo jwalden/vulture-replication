@@ -95,12 +95,6 @@ class MozillaMiner(Miner):
                         log.info('Found node with vulnerabilities: {}'.format(node))
                         index[bugno].append(node[0])
 
-        i = 0
-        for nodes in index.values():
-            if len(nodes) > 0:
-                i += 1
-        print('Linked: {}'.format(i))
-
         return index
 
     def _extract_bugs(self):

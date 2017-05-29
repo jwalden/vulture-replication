@@ -5,7 +5,7 @@ from itertools import chain
 
 
 from lib.core import serialize
-from lib.core.helpers import timeit, read_or_exit, count_files
+from lib.core.helpers import timeit, read_or_exit, count_files, print_feature_stats
 from lib.core.components import Components
 from lib.core.dataset import DataSetBuilder
 from lib.core.exceptions import NodeMismatchException, SourceMismatchException, MissingHistoryException
@@ -77,11 +77,9 @@ class Condor:
         print('components:             {}'.format(len(data.keys())))
         print('components vulnerable:  {}'.format(sum(1 if len(c['bugs'].keys()) > 0 else 0 for c in data.values())))
         print('vulnerabilities:        {}'.format(sum(len(c['bugs'].keys()) for c in data.values())))
-        #print('changes (commits):      {}'.format(sum([len(c['bugs'].values()) for c in data.values()])))
-        print('distinct includes:      {}'.format(
-            len(set(chain.from_iterable(
-                [incl[1] for incl in chain.from_iterable([c['includes'].values() for c in data.values()])])))
-        ))
+        print('')
+        print('feature statistics (distinct):')
+        print_feature_stats(index)
 
     @timeit
     def checkout_head(self):
@@ -132,6 +130,30 @@ class Condor:
         if self.vcs.fetch_current_node() != self.vcs.fetch_head_node():
             print('reverting repository to head node')
             self.vcs.checkout_head()
+
+    @timeit
+    def path_replace(self, index_path):
+        """
+        Replaces the repository root path in the specified component index.
+        
+        :param index_path: Path to the component index. 
+        :return: None
+        """
+        print('replacing repository root path in component index')
+        index = read_or_exit(index_path)
+        oldpath = index['meta']['repo_path']
+        print('current path: {}'.format(oldpath))
+        print('new path: {}'.format(self.repo_path))
+        for component, data in index['index'].items():
+            old_files = data['files']
+            new_files = []
+            for old in old_files:
+                base = old[0].replace(oldpath, '')
+                new = os.path.join(self.repo_path, base)
+                new_files.append((new, old[1]))
+            index['index'][component]['files'] = new_files
+        serialize.persist(index, index_path)
+        print('done.')
 
     @timeit
     def scrape(self):

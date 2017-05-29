@@ -81,7 +81,16 @@ class DataSetBuilder:
                     component_indices = []
                     for f in features[1]:
                         component_indices.append(columns.index(f))
-                    target = 1 if node is not self.max_node else 0
+                    target = 0
+                    if node != self.max_node:
+                        target = 1
+                    else:
+                        for bugnode in chain.from_iterable(data['bugs'].values()):
+                            if len(data[feature].keys()) == 1 or (bugnode in data[feature].keys() and
+                                    data[feature][bugnode][1] == data[feature][self.max_node][1]):
+                                target = 1
+                                break
+
                     indices[component].append((target, component_indices))
 
         matrix = self.__assign_index_values(indices, rows, matrix)
@@ -185,8 +194,8 @@ class DataSetBuilder:
         rows = sparse[2]
         columns = sparse[3]
         matrix = np.zeros((len(rows), len(columns) + 1), dtype=np.uint8)
-        matrix[:, -1:] = sparse[1]
         for i, j in sparse[0]:
             matrix[i, j] = 1
+        matrix[:, -1:] = sparse[1]
 
         return matrix, rows, columns

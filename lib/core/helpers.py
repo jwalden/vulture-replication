@@ -5,6 +5,7 @@ import os
 import numpy as np
 from functools import wraps
 from pprint import pprint
+from itertools import chain
 
 
 from lib.core import serialize
@@ -96,6 +97,13 @@ def count_files(root_dir, extensions):
 
 
 def print_features(dataset, component):
+    """
+    Print the features of a component in the dataset.
+    
+    :param dataset: The dataset to get the features from. 
+    :param component: The component to print the features for.
+    :return: None
+    """
     i = dataset[1].index(component)
     while True:
         print('Vulnerabilities: {}'.format(dataset[0][i, -1]))
@@ -105,3 +113,38 @@ def print_features(dataset, component):
         i += 1
         if dataset[1][i] != component:
             break
+
+
+def print_feature_stats(components):
+    includes_c = list(
+        chain.from_iterable(c['includes'][components['meta']['node']][1] for c in components['index'].values()))
+    includes_h = list(chain.from_iterable(
+        i[1] for i in chain.from_iterable([c['includes'].values() for c in components['index'].values()])))
+    calls_c = list(chain.from_iterable(c['calls'][components['meta']['node']][1] for c in components['index'].values()))
+    calls_h = list(chain.from_iterable(
+        i[1] for i in chain.from_iterable([c['calls'].values() for c in components['index'].values()])))
+    conditionals_c = list(
+        chain.from_iterable(c['conditionals'][components['meta']['node']][1] for c in components['index'].values()))
+    conditionals_h = list(chain.from_iterable(
+        i[1] for i in chain.from_iterable([c['conditionals'].values() for c in components['index'].values()])))
+    defines_c = list(
+        chain.from_iterable(c['defines'][components['meta']['node']][1] for c in components['index'].values()))
+    defines_h = list(chain.from_iterable(
+        i[1] for i in chain.from_iterable([c['defines'].values() for c in components['index'].values()])))
+    namespaces_c = list(
+        chain.from_iterable(c['namespaces'][components['meta']['node']][1] for c in components['index'].values()))
+    namespaces_h = list(chain.from_iterable(
+        i[1] for i in chain.from_iterable([c['namespaces'].values() for c in components['index'].values()])))
+    print('-- current state:')
+    print('includes: {:>21} ({})'.format(len(includes_c), len(set(includes_c))))
+    print('function calls: {:>15} ({})'.format(len(calls_c), len(set(calls_c))))
+    print('conditionals: {:>17} ({})'.format(len(conditionals_c), len(set(conditionals_c))))
+    print('defines: {:>22} ({})'.format(len(defines_c), len(set(defines_c))))
+    print('namespaces: {:>19} ({})'.format(len(namespaces_c), len(set(namespaces_c))))
+    print('')
+    print('-- with feature history:')
+    print('includes: {:>21} ({})'.format(len(includes_h), len(set(includes_h))))
+    print('function calls: {:>15} ({})'.format(len(calls_h), len(set(calls_h))))
+    print('conditionals: {:>17} ({})'.format(len(conditionals_h), len(set(conditionals_h))))
+    print('defines: {:>22} ({})'.format(len(defines_h), len(set(defines_h))))
+    print('namespaces: {:>19} ({})'.format(len(namespaces_h), len(set(namespaces_h))))
