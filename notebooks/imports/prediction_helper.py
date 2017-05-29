@@ -155,11 +155,11 @@ class PredictionHelper:
         # Fit prediction_type to the model
         m.fit(training_data, training_target)
 
-        # Predict remaining data
-        target_prediction = m.predict(test_data)
-
         end = time.time()
         elapsed = (end - start) / 60
+
+        # Predict remaining data
+        target_prediction = m.predict(test_data)
 
         if (prediction_type == 'DT'):
             self.most_important_feature_index = m.tree_.feature[0]
