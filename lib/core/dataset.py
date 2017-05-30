@@ -68,7 +68,6 @@ class DataSetBuilder:
         columns = list(set(chain.from_iterable(
             [incl[1] for incl in chain.from_iterable([c[feature].values() for c in self.index['index'].values()])])))
         # Rows: Repeat the component name for each include set of the component
-        #rows = [c[0] for c in self.index['index'].items() for incl in c[1][feature].keys()]
         rows = [c[0] for c in self.index['index'].items() for i in c[1][feature].keys() if
                 c[1][feature][i][0] == 'o']
         matrix = np.zeros((len(rows), len(columns) + 1), dtype=np.uint8)
@@ -85,6 +84,17 @@ class DataSetBuilder:
                     if node != self.max_node:
                         target = 1
                     else:
+                        '''
+                        This is a hack from late in the project that needs refactoring:
+                        The max_node is considered an "original" node and will be included in the data set with a
+                        target value of 0. But if the same feature set as for the max_node existed in a vulnerable node,
+                        it should still have a target value of 1, since it is known that this feature set is vulnerable.
+                        This is either the case if there is only one feature set (the one of max_node) and the component
+                        has had at least one vulnerability, or if the same feature set is in a vulnerable node
+                        considered a duplicate (which isn't included in the matrix).
+                        Checking the generated matrices has shown that this hack is correct and that indeed no duplicate
+                        feature sets per component are included.
+                        '''
                         for bugnode in chain.from_iterable(data['bugs'].values()):
                             if len(data[feature].keys()) == 1 or (bugnode in data[feature].keys() and
                                     data[feature][bugnode][1] == data[feature][self.max_node][1]):
