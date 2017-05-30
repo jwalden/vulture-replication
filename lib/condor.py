@@ -67,6 +67,7 @@ class Condor:
         index = read_or_exit(read_path)
         meta = index['meta']
         data = index['index']
+        print('GENERAL STATISTICS')
         print('source:                 {}'.format(meta['source_id']))
         print('node:                   {}'.format(meta['node']))
         print('node date:              {}'.format(self.vcs.node_to_date(meta['node'])))
@@ -76,9 +77,9 @@ class Condor:
         print('files:                  {}'.format(len(list(chain.from_iterable([d['files'] for d in data.values()])))))
         print('components:             {}'.format(len(data.keys())))
         print('components vulnerable:  {}'.format(sum(1 if len(c['bugs'].keys()) > 0 else 0 for c in data.values())))
-        print('vulnerabilities:        {}'.format(sum(len(c['bugs'].keys()) for c in data.values())))
+        #print('vulnerabilities:        {}'.format(sum(len(c['bugs'].keys()) for c in data.values())))
         print('')
-        print('feature statistics (distinct):')
+        print('FEATURE STATISTICS (distinct):')
         print_feature_stats(index)
 
     @timeit
