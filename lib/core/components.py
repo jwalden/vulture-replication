@@ -93,6 +93,7 @@ class Components:
         """
         log.info('Adding fixing nodes to components')
 
+        miss_component = 0
         for bug, nodes in file_index.items():
             for node, files in nodes.items():
                 node_date = self.vcs.node_to_date(node)
@@ -108,7 +109,10 @@ class Components:
                             else:
                                 self.index['index'][component]['bugs'][bug] = set([node])
                         else:
+                            miss_component += 1
                             log.warn('Component {} is not in component index'.format(component))
+
+        log.info('{} files / components from the file index could not be assigned'.format(miss_component))
 
         self.fixes_added = True
         return self.index

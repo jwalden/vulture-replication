@@ -47,7 +47,9 @@ for i, advisory in enumerate(advisories):
 
 
 # General Stats
-print('Distinct bug numbers: {}'.format(len(set(bugs))))
+print('Distinct bug numbers:                            {}'.format(len(set(bugs))))
+print('Distinct bug numbers in the component index:     {}'.format(len(set(
+    chain.from_iterable(c['bugs'].keys() for c in components['index'].values())))))
 print('')
 
 
