@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 class Components:
 
     INCLUDES_PATTERN = re.compile(r'^#include (<|")(.*?)(>|").*$', re.MULTILINE)
-    COND_PATTERN = re.compile(r'(?:^#if !? ?defined ?\(([a-zA-Z0-9_]+)\)$)|(?:^#ifn?def ([a-zA-Z0-9_]+)$)', re.MULTILINE)
+    COND_PATTERN = re.compile(r'(?:^#(?:el)?if !? ?defined ?\(([a-zA-Z0-9_]+)\)$)|(?:^#ifn?def ([a-zA-Z0-9_]+)$)', re.MULTILINE)
     DEFINES_PATTERN = re.compile(r'^#define ([a-zA-Z0-9_]+)(?:\(.*?\))?(?: .*?)?$', re.MULTILINE)
     NAMESPACE_PATTERN = re.compile(r'^(?:using )?namespace ([a-zA-Z0-9_:]+)(?:(?: {)|;)?$', re.MULTILINE)
     CALL_PATTERN = re.compile(r'((?![0-9])[a-zA-Z0-9_]+)(?:<.*?>)?\(.*?\)(?:;|(?!(?: ?{)|(?: ?(?:const)?\\?\n *{)))',
