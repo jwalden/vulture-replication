@@ -11,11 +11,12 @@ class PredictionHelper:
     def __init__(self):
         self.matrix_helper = MatrixHelper()
         self.compare_matrix = None
-        self.time = None
+        self.time_fitting = None
+        self.time_predicting = None
         self.most_important_feature_index = None
         self.most_important_feature = None
 
-    def calculate_validation_compare_matrix(self, matrices, sampling_factor=(2.0/3), model_type='SVM', crop_matrix=-1, penalty=1.0):
+    def calculate_validation_compare_matrix(self, matrices, sampling_factor=(2.0/3), model_type='LinearSVC', crop_matrix=-1, penalty=1.0):
         """
         Creates a comparison matrix on a single revision. The feature matrix of
         this revision is splitted into training and test set by stratified sampling
@@ -75,9 +76,10 @@ class PredictionHelper:
             compare_matrix.append([test_rows[i], round(float(target_prediction[i])), test_target[i]])
 
         self.compare_matrix = np.array(compare_matrix)
-        self.time = time
+        self.time_fitting = time[0]
+        self.time_predicting = time[1]
 
-    def calculate_semiannual_compare_matrix(self, matrices, validation_matrices, model_type='LinearSVC', penalty=1.0):
+    def calculate_semiannual_compare_matrix(self, matrices, validation_matrices, model_type='LinearSVR', penalty=1.0):
         """
         Creates a comparison matrix on two different revisions. With the feature
         matrix of an old revision, a model is fitted and applied to all components
@@ -125,7 +127,8 @@ class PredictionHelper:
 
         self.compare_matrix = np.array(compare_matrix)
         self.compare_matrix_with_deleted = np.array(compare_matrix_with_deleted)
-        self.time = time
+        self.time_fitting = time[0]
+        self.time_predicting = time[1]
 
     def predict(self, training_data, training_target, test_data, model_type, penalty):
         """
@@ -154,17 +157,20 @@ class PredictionHelper:
 
         # Fit data to the model
         m.fit(training_data, training_target)
-
-        end = time.time()
-        elapsed = (end - start) / 60
+        end_fitting = time.time()
 
         # Predict remaining data
         target_prediction = m.predict(test_data)
+        end_predicting = time.time()
+
+        elapsed_fitting = (end_fitting - start)
+        elapsed_predicting = (end_predicting - end_fitting)
+
 
         if (model_type == 'DT'):
             self.most_important_feature_index = m.tree_.feature[0]
 
-        return target_prediction, elapsed
+        return target_prediction, (elapsed_fitting, elapsed_predicting)
 
     def get_compare_matrix(self, with_deleted_components=False):
         if (with_deleted_components):
