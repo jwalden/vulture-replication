@@ -9,7 +9,7 @@ from lib.core.exceptions import InvalidDateException
 from lib.condor import Condor
 
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s',
                     filename='condor.log',
                     filemode='w')

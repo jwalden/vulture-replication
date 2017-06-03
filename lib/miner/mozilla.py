@@ -92,8 +92,13 @@ class MozillaMiner(Miner):
                 for group in groups:
                     bugno = match.group(group)
                     if bugno in bugs:
-                        log.info('Found node with vulnerabilities: {}'.format(node))
+                        log.debug('Found node with vulnerabilities: {}'.format(node))
                         index[bugno].append(node[0])
+
+        no_bugs = len(set(bugs))
+        no_assigned = sum([1 if len(nodes) > 0 else 0 for bno, nodes in index.items()])
+        log.info('Of {} total distinct bug identifiers, {} could be assigned to changesets.'.format(
+            no_bugs, no_assigned))
 
         return index
 
@@ -108,7 +113,7 @@ class MozillaMiner(Miner):
         count = len(advisories)
         bugs = []
         for i, advisory in enumerate(advisories):
-            log.info('Parsing advisory {} of {}'.format(i, count))
+            log.debug('Parsing advisory {} of {}'.format(i, count))
             advisorybugs = self._parse_advisory(os.path.join(self.advisory_path, advisory))
             if len(advisorybugs) == 0:
                 log.error('No referenced bugs for advisory {}'.format(advisory))

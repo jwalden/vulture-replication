@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 class Components:
 
     INCLUDES_PATTERN = re.compile(r'^#include (<|")(.*?)(>|").*$', re.MULTILINE)
-    COND_PATTERN = re.compile(r'(?:^#if !? ?defined ?\(([a-zA-Z0-9_]+)\)$)|(?:^#ifn?def ([a-zA-Z0-9_]+)$)', re.MULTILINE)
+    COND_PATTERN = re.compile(r'(?:^#(?:el)?if !? ?defined ?\(([a-zA-Z0-9_]+)\)$)|(?:^#ifn?def ([a-zA-Z0-9_]+)$)', re.MULTILINE)
     DEFINES_PATTERN = re.compile(r'^#define ([a-zA-Z0-9_]+)(?:\(.*?\))?(?: .*?)?$', re.MULTILINE)
     NAMESPACE_PATTERN = re.compile(r'^(?:using )?namespace ([a-zA-Z0-9_:]+)(?:(?: {)|;)?$', re.MULTILINE)
     CALL_PATTERN = re.compile(r'((?![0-9])[a-zA-Z0-9_]+)(?:<.*?>)?\(.*?\)(?:;|(?!(?: ?{)|(?: ?(?:const)?\\?\n *{)))',
@@ -93,6 +93,7 @@ class Components:
         """
         log.info('Adding fixing nodes to components')
 
+        miss_component = 0
         for bug, nodes in file_index.items():
             for node, files in nodes.items():
                 node_date = self.vcs.node_to_date(node)
@@ -108,7 +109,10 @@ class Components:
                             else:
                                 self.index['index'][component]['bugs'][bug] = set([node])
                         else:
+                            miss_component += 1
                             log.warn('Component {} is not in component index'.format(component))
+
+        log.info('{} files / components from the file index could not be assigned'.format(miss_component))
 
         self.fixes_added = True
         return self.index
