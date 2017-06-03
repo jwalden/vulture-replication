@@ -119,9 +119,11 @@ class PredictionHelper:
         compare_matrix_with_deleted = []
         for i in range(len(not_vulnerable_rows)):
             if not_vulnerable_rows[i] in validation_rows:
-                validation_index = validation_rows.index(not_vulnerable_rows[i])
-                compare_matrix.append([not_vulnerable_rows[i], round(float(target_prediction[i])), validation_feature_matrix[validation_index, -1]])
-                compare_matrix_with_deleted.append([not_vulnerable_rows[i], round(float(target_prediction[i])), validation_feature_matrix[validation_index, -1]])
+                validation_indices = np.where(np.array(validation_rows)==not_vulnerable_rows[i])[0]
+                validation_index_max = validation_indices[np.argmax(validation_feature_matrix[validation_indices, -1])]
+
+                compare_matrix.append([not_vulnerable_rows[i], round(float(target_prediction[i])), validation_feature_matrix[validation_index_max, -1]])
+                compare_matrix_with_deleted.append([not_vulnerable_rows[i], round(float(target_prediction[i])), validation_feature_matrix[validation_index_max, -1]])
             else:
                 compare_matrix_with_deleted.append([not_vulnerable_rows[i], round(float(target_prediction[i])), 'Deleted'])
 
