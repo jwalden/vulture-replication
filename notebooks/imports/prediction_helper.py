@@ -16,7 +16,7 @@ class PredictionHelper:
         self.most_important_feature_index = None
         self.most_important_feature = None
 
-    def calculate_validation_compare_matrix(self, matrices, sampling_factor=(2.0/3), model_type='LinearSVC', crop_matrix=-1, penalty=1.0):
+    def calculate_validation_compare_matrix(self, matrices, sampling_factor=(2.0/3), model_type='LinearSVC', crop_matrix=-1, penalty=0.1):
         """
         Creates a comparison matrix on a single revision. The feature matrix of
         this revision is splitted into training and test set by stratified sampling
@@ -79,7 +79,7 @@ class PredictionHelper:
         self.time_fitting = time[0]
         self.time_predicting = time[1]
 
-    def calculate_semiannual_compare_matrix(self, matrices, validation_matrices, model_type='LinearSVR', penalty=1.0):
+    def calculate_semiannual_compare_matrix(self, matrices, validation_matrices, model_type='LinearSVR', penalty=0.1):
         """
         Creates a comparison matrix on two different revisions. With the feature
         matrix of an old revision, a model is fitted and applied to all components
