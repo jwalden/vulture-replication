@@ -7,7 +7,6 @@ import copy
 from matrix_helper import MatrixHelper
 
 class PredictionHelper:
-
     def __init__(self):
         self.matrix_helper = MatrixHelper()
         self.compare_matrix = None
@@ -175,6 +174,15 @@ class PredictionHelper:
         return target_prediction, (elapsed_fitting, elapsed_predicting)
 
     def get_compare_matrix(self, with_deleted_components=False):
+        """
+        Returns the calculated compare matric with or without a "deleted" entry
+        fpr delted components.
+
+        :param with_deleted_components: If true, in the semiannual comparaison
+        are components that were deleted in the later revision, still displayed
+        in the compare matrix.
+        :return: The compare matrix.
+        """
         if (with_deleted_components):
             return self.compare_matrix_with_deleted
         return self.compare_matrix
@@ -195,18 +203,3 @@ class PredictionHelper:
 
         sorted_indeces = np.array(self.compare_matrix[:,reference_column], dtype='f').argsort()[::-1]
         return copy.copy(self.compare_matrix[sorted_indeces])
-
-    def get_compare_matrix_top(self, percent=0.01, with_deleted_components=False):
-        """
-        Return a percentage (highest x percent) of the sorted compare matrix.
-
-        :param percent: Percentage of predicted components that will be returned.
-        :param with_deleted_components: If true, in the semiannual comparaison
-        are components that were deleted in the later revision, still displayed
-        in the compare matrix.
-        :return: Highest x percent of the sorted compare matrix.
-        """
-        compare_matrix_sorted = self.get_compare_matrix_sorted(with_deleted_components)
-        actual_samples_count = len(compare_matrix_sorted[:,0])
-        relevant_samples_count = int(round(percent * actual_samples_count))
-        return compare_matrix_sorted[range(relevant_samples_count), :]

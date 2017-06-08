@@ -136,13 +136,3 @@ class MatrixHelper:
         data = matrix[:, range(features_count)]
         target = matrix[:, features_count]
         return data, target
-
-    def get_vulnerable_percentage(self, matrix):
-        """
-        Calculates the percentage of vulnerable components in a given matric.
-
-        :param matrix: The matrix for that the percentage is calculated.
-        :return: Percentage of vulnerable components as an Integer.
-        """
-
-        return (matrix[matrix > 0]).size * 100.0 / matrix.size
