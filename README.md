@@ -76,4 +76,3 @@ Building the data set requires a component index and takes about 30 seconds.
 #### Log File
 The output of the script is quite basic. If you want to see more detailed output, you can
 observe the log output in `condor.log`.
-
